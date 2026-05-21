@@ -1,665 +1,467 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Website Quality Checker</title>
-  <script>
-  (function(apiKey){
-      (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
-      v=['initialize','identify','updateOptions','pageLoad','track', 'trackAgent'];for(w=0,x=v.length;w<x;++w)(function(m){
-      o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
-      y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
-      z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
-  })('813d5815-7b68-4289-ac60-0725393711e7');
-  </script>
-  <meta name="description" content="Check how well a government or public sector website meets UK accessibility, service standard and privacy requirements." />
+  <meta charset="utf-8">
+  <title>SiteAudit – GOV.UK‑style service assessment helper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
-    :root {
-      --black: #0b0c0c;
-      --white: #ffffff;
-      --blue: #1d70b8;
-      --blue-dark: #003078;
-      --blue-light: #e8f1fb;
-      --green-bg: #d4edda;
-      --amber-bg: #fef3e2;
-      --red-bg: #fde8e5;
-      --grey-100: #f3f2f1;
-      --grey-200: #b1b4b6;
-      --grey-300: #505a5f;
-      --focus: #ffdd00;
-      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+      background: #f3f2f1;
+      color: #0b0c0c;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font); color: var(--black); background: var(--white); font-size: 16px; line-height: 1.6; }
-    a:focus, button:focus, input:focus { outline: 3px solid var(--focus); outline-offset: 0; }
 
-    header { background: var(--blue-dark); padding: 12px 5%; display: flex; align-items: center; gap: 12px; }
-    .crown { width: 36px; height: 36px; background: var(--white); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-    header h1 { color: var(--white); font-size: 1.1rem; font-weight: 700; }
-    header p { color: #c8d8ea; font-size: 0.8rem; margin-top: 1px; }
-    .phase-banner { background: var(--blue-light); border-left: 4px solid var(--blue); padding: 8px 5%; font-size: 0.85rem; color: var(--grey-300); }
-    .phase-banner strong { color: var(--blue-dark); }
+    header {
+      background: #0b0c0c;
+      color: #fff;
+      padding: 1.5rem 1rem;
+    }
 
-    main { max-width: 900px; margin: 0 auto; padding: 40px 5% 80px; }
-    .input-section { margin-bottom: 48px; }
-    .input-section h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--blue-dark); }
-    .input-section > p { color: var(--grey-300); margin-bottom: 24px; font-size: 0.95rem; }
+    header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.75rem;
+    }
 
-    /* API key input */
-    .api-key-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; max-width: 620px; flex-wrap: wrap; }
-    .api-key-row label { font-size: 0.85rem; color: var(--grey-300); white-space: nowrap; }
-    .api-key-row input { flex: 1; min-width: 200px; padding: 8px 12px; font-size: 0.88rem; font-family: var(--font); border: 2px solid var(--grey-200); border-radius: 4px; outline: none; }
-    .api-key-row input:focus { border-color: var(--blue); }
-    .api-key-row a { font-size: 0.8rem; color: var(--blue); text-decoration: underline; white-space: nowrap; }
-    .api-key-note { font-size: 0.78rem; color: var(--grey-300); margin-bottom: 16px; max-width: 620px; }
+    header p {
+      margin: 0;
+      max-width: 40rem;
+    }
 
-    .form-group { display: flex; gap: 0; max-width: 620px; }
-    .form-group input[type="url"] { flex: 1; padding: 12px 16px; font-size: 1rem; font-family: var(--font); border: 2px solid var(--black); border-right: none; border-radius: 4px 0 0 4px; outline: none; }
-    .form-group input[type="url"]:focus { border-color: var(--blue); box-shadow: inset 0 0 0 2px var(--blue); }
-    .form-group button { padding: 12px 24px; background: var(--blue); color: var(--white); border: 2px solid var(--blue); border-radius: 0 4px 4px 0; font-size: 1rem; font-weight: 600; font-family: var(--font); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
-    .form-group button:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
-    .form-hint { margin-top: 10px; font-size: 0.85rem; color: var(--grey-300); }
-    .form-hint a { color: var(--blue); text-decoration: underline; cursor: pointer; }
+    main {
+      padding: 1.5rem 1rem 3rem 1rem;
+    }
 
-    /* Error banner */
-    .error-banner { display: none; background: var(--red-bg); border-left: 4px solid #aa2a16; padding: 12px 16px; margin-top: 16px; border-radius: 4px; font-size: 0.88rem; color: #7a1d0f; max-width: 620px; }
+    .container {
+      max-width: 60rem;
+      margin: 0 auto;
+    }
 
-    #loading { display: none; padding: 32px 0; }
-    .loading-inner { max-width: 620px; }
-    .loading-inner p { color: var(--grey-300); margin-bottom: 12px; font-size: 0.9rem; }
-    .progress-steps { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-    .progress-steps li { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--grey-300); }
-    .step-icon { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--grey-200); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; flex-shrink: 0; }
-    .step-done { border-color: #005a30; background: #005a30; color: white; }
-    .step-active { border-color: var(--blue); border-top-color: transparent; animation: spin 0.8s linear infinite; }
-    .step-wait { border-color: var(--grey-200); }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .section {
+      margin-bottom: 2.5rem;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
 
-    #report { display: none; }
+    .section-muted {
+      background: #f3f2f1;
+      box-shadow: none;
+    }
 
-    .report-header { background: var(--blue-dark); color: var(--white); border-radius: 6px 6px 0 0; padding: 28px 32px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; }
-    .report-site { font-size: 1.2rem; font-weight: 700; color: var(--white); }
-    .report-site span { display: block; font-size: 0.82rem; font-weight: 400; color: #c8d8ea; margin-top: 4px; }
-    .report-data-badge { display: inline-block; margin-top: 8px; font-size: 0.75rem; padding: 3px 10px; border-radius: 3px; font-weight: 600; }
-    .badge-real { background: #d4edda; color: #00401f; }
-    .badge-partial { background: var(--amber-bg); color: #6e3100; }
-    .overall-score-wrap { text-align: center; }
-    .overall-score { font-size: 3.5rem; font-weight: 800; line-height: 1; color: var(--white); }
-    .overall-label { font-size: 0.8rem; color: #c8d8ea; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-    .overall-verdict { font-size: 0.85rem; font-weight: 600; margin-top: 6px; padding: 4px 12px; border-radius: 3px; display: inline-block; }
-    .verdict-red    { background: #aa2a16; color: #ffffff; }
-    .verdict-amber  { background: #b54800; color: #ffffff; }
-    .verdict-green  { background: #00703c; color: #ffffff; }
+    h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
 
-    .screenshot-strip { background: #012257; padding: 20px 32px; display: flex; align-items: flex-start; gap: 20px; }
-    .screenshot-wrap { width: 260px; height: 160px; border-radius: 5px; overflow: hidden; border: 2px solid rgba(255,255,255,0.2); flex-shrink: 0; background: #01194a; display: flex; align-items: center; justify-content: center; }
-    .screenshot-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .screenshot-meta strong { color: #ffffff; font-size: 1rem; display: block; margin-bottom: 4px; }
-    .screenshot-meta span { color: #c8d8ea; font-size: 0.82rem; display: block; }
+    h3 {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+    }
 
-    .benchmark-bar { background: #012257; padding: 14px 32px 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.08); }
-    .benchmark-label { font-size: 0.78rem; color: #c8d8ea; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
-    .bench-track { flex: 1; min-width: 160px; height: 10px; background: #01194a; border-radius: 5px; position: relative; }
-    .bench-fill-site { height: 100%; border-radius: 5px; transition: width 0.8s ease; }
-    .bench-marker { position: absolute; top: -5px; width: 2px; height: 20px; background: #ffdd00; }
-    .bench-marker-label { position: absolute; top: -22px; font-size: 0.68rem; color: #ffdd00; font-weight: 700; white-space: nowrap; transform: translateX(-50%); }
-    .bench-numbers { font-size: 0.78rem; color: #ffffff; white-space: nowrap; font-weight: 500; }
+    p {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
 
-    .score-list { border: 1px solid var(--grey-200); border-top: none; }
-    .score-list-item { display: flex; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--grey-100); gap: 16px; }
-    .score-list-item:last-child { border-bottom: none; }
-    .score-list-label { flex: 1; font-size: 0.92rem; font-weight: 600; color: var(--black); }
-    .score-list-label small { display: block; font-size: 0.72rem; font-weight: 400; color: var(--grey-300); margin-top: 1px; }
-    .score-list-num { font-size: 1.5rem; font-weight: 800; min-width: 52px; text-align: right; }
-    .num-green { color: #005a30; }
-    .num-amber { color: #6e3100; }
-    .num-red   { color: #7a1d0f; }
-    .score-list-bar-wrap { flex: 2; min-width: 100px; }
-    .score-bar-track { height: 8px; background: var(--grey-100); border-radius: 4px; overflow: visible; position: relative; margin-bottom: 4px; }
-    .score-bar-fill { height: 100%; border-radius: 4px; }
-    .score-bar-bench-marker { position: absolute; top: -4px; width: 2px; height: 16px; background: var(--grey-300); border-radius: 1px; }
-    .score-bar-bench-label { font-size: 0.68rem; color: var(--grey-300); }
-    .bench-pill { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
-    .bench-above { background: var(--green-bg); color: #00401f; }
-    .bench-below { background: var(--red-bg); color: #7a1d0f; }
-    .bench-near  { background: var(--amber-bg); color: #6e3100; }
+    .form-group {
+      margin-bottom: 1rem;
+    }
 
-    /* Real data source tags */
-    .source-tag { font-size: 0.65rem; padding: 1px 5px; border-radius: 2px; margin-left: 6px; vertical-align: middle; font-weight: 600; }
-    .source-real { background: var(--green-bg); color: #00401f; }
-    .source-est  { background: var(--grey-100); color: var(--grey-300); }
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
 
-    .report-section { border: 1px solid var(--grey-200); border-top: none; padding: 28px 32px; }
-    .report-section h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; padding-bottom: 10px; border-bottom: 2px solid var(--grey-100); color: var(--blue-dark); }
-    .section-desc { font-size: 0.82rem; color: var(--grey-300); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px dashed var(--grey-200); font-style: italic; }
+    .form-control {
+      display: block;
+      width: 100%;
+      max-width: 36rem;
+      padding: 0.5rem;
+      border: 1px solid #b1b4b6;
+      border-radius: 2px;
+      font: inherit;
+      box-sizing: border-box;
+    }
 
-    .issue-list { list-style: none; }
-    .issue-list li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--grey-100); font-size: 0.9rem; align-items: flex-start; }
-    .issue-list li:last-child { border-bottom: none; }
-    .issue-num { background: #7a1d0f; color: #ffffff; font-size: 0.75rem; font-weight: 700; min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .form-control:focus {
+      outline: 3px solid #fd0;
+      outline-offset: 0;
+      border-color: #0b0c0c;
+    }
 
-    .standard-cards { display: flex; flex-direction: column; gap: 12px; }
-    .standard-card { border: 1px solid var(--grey-200); border-radius: 5px; overflow: hidden; }
-    .standard-card-header { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: var(--grey-100); flex-wrap: wrap; }
-    .std-num { background: var(--blue-dark); color: #ffffff; font-size: 0.78rem; font-weight: 700; min-width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-    .std-title { font-weight: 700; font-size: 0.92rem; flex: 1; color: var(--black); min-width: 160px; }
-    .std-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .std-score-badge { font-size: 0.82rem; font-weight: 700; padding: 2px 10px; border-radius: 3px; background: var(--white); border: 1px solid var(--grey-200); color: var(--black); }
-    .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 3px; white-space: nowrap; }
-    .tag-pass    { background: var(--green-bg); color: #00401f; }
-    .tag-fail    { background: var(--red-bg);   color: #7a1d0f; }
-    .tag-partial { background: var(--amber-bg); color: #6e3100; }
-    .tag-na      { background: var(--grey-100); color: var(--grey-300); }
-    .govuk-ref { font-size: 0.72rem; color: var(--grey-300); white-space: nowrap; }
-    .govuk-ref strong { color: #005a30; }
-    .standard-card-body { padding: 12px 16px; font-size: 0.875rem; color: var(--grey-300); line-height: 1.65; border-top: 1px solid var(--grey-200); background: var(--white); }
+    .button {
+      display: inline-block;
+      appearance: none;
+      border: none;
+      border-radius: 0;
+      padding: 0.6rem 1.4rem;
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+    }
 
-    .improvement { padding: 16px 0; border-bottom: 1px solid var(--grey-100); }
-    .improvement:last-child { border-bottom: none; }
-    .improvement h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; color: var(--blue-dark); }
-    .improvement p { font-size: 0.88rem; color: var(--grey-300); line-height: 1.6; }
+    .button-primary {
+      background: #1d70b8;
+      color: #fff;
+    }
 
-    /* Lighthouse detail box */
-    .lh-detail { background: var(--grey-100); border-radius: 5px; padding: 16px 20px; margin-top: 16px; }
-    .lh-detail h4 { font-size: 0.85rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 10px; }
-    .lh-items { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-    .lh-items li { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--grey-300); gap: 12px; }
-    .lh-items li span:last-child { font-weight: 600; color: var(--black); text-align: right; }
+    .button-primary:hover {
+      background: #003078;
+    }
 
-    .report-footer { border: 1px solid var(--grey-200); border-top: none; border-radius: 0 0 6px 6px; background: var(--grey-100); padding: 16px 32px; font-size: 0.8rem; color: var(--grey-300); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-    footer { background: var(--blue-dark); color: #c8d8ea; padding: 24px 5%; font-size: 0.82rem; text-align: center; }
+    .status-text {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+    }
 
-    @media (max-width: 620px) {
-      .form-group { flex-direction: column; }
-      .form-group input[type="url"] { border-right: 2px solid var(--black); border-radius: 4px; }
-      .form-group button { border-radius: 4px; }
-      .report-header { flex-direction: column; }
-      .report-section { padding: 20px 16px; }
-      .benchmark-bar, .screenshot-strip { padding: 14px 16px; }
-      .screenshot-wrap { width: 120px; height: 80px; }
-      .score-list-item { flex-wrap: wrap; }
+    .score-large {
+      font-size: 1.4rem;
+      margin-top: 0.5rem;
+    }
+
+    ul {
+      padding-left: 1.25rem;
+    }
+
+    code {
+      font-family: monospace;
+    }
+
+    footer {
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: #505a5f;
     }
   </style>
 </head>
 <body>
-
-<header>
-  <div class="crown">🏛️</div>
-  <div>
-    <h1>GovAudit</h1>
-    <p>Website quality checker for government &amp; public sector</p>
-  </div>
-</header>
-
-<div class="phase-banner">
-  <strong>Beta</strong> — Scores public sector websites against UK accessibility, service standard and privacy requirements.
-</div>
-
-<main>
-  <section class="input-section">
-    <h2>Check a website</h2>
-    <p>Enter any public sector URL to get a real audit. Performance, accessibility and SEO scores are fetched live from Google Lighthouse. Other dimensions use verified research data where available.</p>
-
-    <input type="hidden" id="apiKeyInput" value="AIzaSyAmigxDkXRfFzjr8CApkzQqtxAhgSsqf6s" />
-
-    <div class="form-group">
-      <input type="url" id="urlInput" placeholder="https://www.example.gov.uk" aria-label="Website URL to audit" />
-      <button id="auditBtn" onclick="runAudit()">Run audit</button>
+  <header>
+    <div class="container">
+      <h1>SiteAudit</h1>
+      <p>
+        Experimental assistant to review public sector websites using the UK Government Service
+        Standard, WCAG 2.2, privacy and security expectations, and Lighthouse‑style signals.
+      </p>
     </div>
-    <p class="form-hint">Try an example: <a onclick="loadExample()" tabindex="0">https://www.legislation.gov.uk</a></p>
-    <div class="error-banner" id="errorBanner"></div>
-  </section>
+  </header>
 
-  <div id="loading">
-    <div class="loading-inner">
-      <p id="loadingMsg">Fetching live Lighthouse data from Google…</p>
-      <ul class="progress-steps" id="progressSteps">
-        <li id="step1"><div class="step-icon step-active"></div> Calling Google PageSpeed Insights API…</li>
-        <li id="step2"><div class="step-icon step-wait"></div> Processing Performance score</li>
-        <li id="step3"><div class="step-icon step-wait"></div> Processing Accessibility score</li>
-        <li id="step4"><div class="step-icon step-wait"></div> Processing SEO score</li>
-        <li id="step5"><div class="step-icon step-wait"></div> Building report</li>
-      </ul>
-    </div>
-  </div>
+  <main>
+    <div class="container">
 
-  <div id="report">
-    <div class="report-header">
-      <div>
-        <div class="report-site" id="r-site">—<span id="r-meta"></span></div>
-        <div class="report-data-badge" id="r-data-badge"></div>
-      </div>
-      <div class="overall-score-wrap">
-        <div class="overall-score" id="r-overall">—</div>
-        <div class="overall-label">Overall Score / 100</div>
-        <div class="overall-verdict" id="r-verdict"></div>
-      </div>
-    </div>
+      <!-- Intro / explanation -->
+      <section class="section">
+        <h2>How this works</h2>
+        <p>
+          Enter a live URL and describe what the page is for and who it is for. The backend
+          workflow (via n8n and an AI model) will fetch the page, compare it to your intent,
+          and generate a mini report:
+        </p>
+        <ul>
+          <li>Overall 0–100 score (Lighthouse‑style banding)</li>
+          <li>Top 5 issues to address first</li>
+          <li>Selected UK Government Service Standard points (1, 3, 4, 5, 9)</li>
+          <li>WCAG 2.2 accessibility, privacy and security, SEO/performance, environment</li>
+        </ul>
+      </section>
 
-    <div class="screenshot-strip">
-      <div class="screenshot-wrap"><img id="screenshotImg" src="" alt="Screenshot of audited website" /></div>
-      <div class="screenshot-meta">
-        <strong id="screenshotSiteLabel">—</strong>
-        <span>Screenshot captured at time of audit</span>
-        <span id="screenshotStrategy" style="margin-top:6px;"></span>
-      </div>
-    </div>
+      <!-- Phase 1: form to send to n8n -->
+      <section class="section">
+        <h2>Run a quick page assessment</h2>
+        <p>
+          This is the “intent” form. It mirrors what teams bring to a service assessment:
+          who the page is for, what it should help them do, and where it sits in the journey.
+        </p>
 
-    <div class="benchmark-bar">
-      <span class="benchmark-label">vs GOV.UK benchmark</span>
-      <div class="bench-track">
-        <div class="bench-fill-site" id="benchFill" style="width:0%"></div>
-        <div class="bench-marker" style="left:88%"><div class="bench-marker-label">GOV.UK 88</div></div>
-      </div>
-      <span class="bench-numbers" id="benchNumbers">—</span>
-    </div>
+        <form id="siteaudit-form">
+          <fieldset>
+            <legend class="form-label">About the page</legend>
 
-    <div class="score-list" id="scoreList"></div>
+            <div class="form-group">
+              <label for="url" class="form-label">Page URL to review</label>
+              <input
+                type="url"
+                id="url"
+                name="url"
+                class="form-control"
+                required
+                placeholder="https://www.example.gov.uk/path"
+              >
+            </div>
 
-    <div class="report-section" id="lhSection" style="display:none;">
-      <h3>📊 Live Lighthouse detail</h3>
-      <p class="section-desc">These Core Web Vital metrics were retrieved live from Google PageSpeed Insights at the time of this audit. They reflect real-world performance as measured by Google's Lighthouse engine.</p>
-      <div class="lh-detail">
-        <h4>Core Web Vitals &amp; key metrics</h4>
-        <ul class="lh-items" id="lhItems"></ul>
-      </div>
-    </div>
+            <div class="form-group">
+              <label for="page_type" class="form-label">What kind of page is this?</label>
+              <select id="page_type" name="page_type" class="form-control" required>
+                <option value="">Select one</option>
+                <option value="start">Start page</option>
+                <option value="information">Information / guidance page</option>
+                <option value="transaction_step">Step in a transaction</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
-    <div class="report-section">
-      <h3>⚠️ Top 5 issues to address</h3>
-      <p class="section-desc">The highest-priority problems identified. Fixing these will have the greatest impact on the overall score and on users' experience of the service.</p>
-      <ul class="issue-list" id="r-issues"></ul>
-    </div>
+            <div class="form-group">
+              <label for="main_user" class="form-label">Who is the main user of this page?</label>
+              <input
+                type="text"
+                id="main_user"
+                name="main_user"
+                class="form-control"
+                required
+                placeholder="For example: Local authority caseworker"
+              >
+            </div>
 
-    <div class="report-section">
-      <h3>🏛️ UK Government Service Standard</h3>
-      <p class="section-desc">The 14-point UK Government Service Standard defines what good digital public services look like. Each point is scored out of 10 with a rationale, benchmarked against GOV.UK.</p>
-      <div class="standard-cards" id="r-standard"></div>
-    </div>
+            <div class="form-group">
+              <label for="user_need" class="form-label">What is their main user need?</label>
+              <textarea
+                id="user_need"
+                name="user_need"
+                class="form-control"
+                rows="3"
+                required
+                placeholder="As a [type of user] I need to [do something] so that [outcome]."
+              ></textarea>
+            </div>
 
-    <div class="report-section">
-      <h3>♿ WCAG 2.2 Accessibility</h3>
-      <p class="section-desc">WCAG 2.2 Level AA is the legal requirement for all UK public sector websites under PSBAR 2018. GOV.UK scores 91/100. Failure to meet this standard is a legal risk and excludes disabled users.</p>
-      <p id="r-wcag" style="font-size:0.9rem;color:var(--grey-300);line-height:1.7;"></p>
-    </div>
+            <div class="form-group">
+              <label for="desired_outcome" class="form-label">
+                After using this page, what should the user be able to do or decide?
+              </label>
+              <textarea
+                id="desired_outcome"
+                name="desired_outcome"
+                class="form-control"
+                rows="3"
+                required
+              ></textarea>
+            </div>
+          </fieldset>
 
-    <div class="report-section">
-      <h3>🔒 Privacy &amp; Security</h3>
-      <p class="section-desc">UK public sector websites must comply with UK GDPR, the Data Protection Act 2018, and PECR — including HTTPS, cookie consent, a named DPO and transparent data handling. GOV.UK scores 85/100.</p>
-      <p id="r-privacy-detail" style="font-size:0.9rem;color:var(--grey-300);line-height:1.7;"></p>
-    </div>
+          <div class="form-group">
+            <button type="submit" class="button button-primary">
+              Assess this page
+            </button>
+          </div>
 
-    <div class="report-section">
-      <h3>🌱 Environmental Sustainability</h3>
-      <p class="section-desc">The GDS Technology Code of Practice asks services to consider environmental impact — hosting carbon commitments, page weight, image optimisation and third-party scripts. GOV.UK scores 72/100.</p>
-      <p id="r-env-detail" style="font-size:0.9rem;color:var(--grey-300);line-height:1.7;"></p>
-    </div>
+          <p id="siteaudit-status" aria-live="polite" class="status-text"></p>
+        </form>
+      </section>
 
-    <div class="report-section">
-      <h3>🔧 Top 5 recommended improvements</h3>
-      <p class="section-desc">Actionable recommendations with specific steps your team can take to improve the score.</p>
-      <div id="r-improvements"></div>
-    </div>
-
-    <div class="report-footer">
-      <span id="r-footer-site"></span>
-      <span>GOV.UK benchmark: 88/100</span>
-      <span id="r-footer-date"></span>
-    </div>
-  </div>
-</main>
-
-<footer>
-  <p>GovAudit — For digital teams, agencies and service owners working on UK government and public sector websites.</p>
-  <p style="margin-top:6px;">Scored against: WCAG 2.2 AA · UK Government Service Standard · UK GDPR &amp; PECR · GDS Design System · Benchmarked vs GOV.UK (88/100)</p>
-</footer>
-
-<script>
-// ── Constants ────────────────────────────────────────────────────────────────
-const GOVUK = { overall:88, perf:91, access:91, seo:94, privacy:85, security:90, env:72,
-  standard:[10,9,9,10,9,9,9,9,10,8,9,9,10,9] };
-
-// ── Legislation hardcoded data (used for service standard / narrative only) ──
-const LEG_EXTRA = {
-  privacy:58, security:58, env:40,
-  issues:[
-    "WCAG 2.2 AA non-compliance — only partial WCAG 2.1 AA met; site not updated to the current legal standard",
-    "No responsive / mobile-first layout — pages break at 320px, violating WCAG SC 1.4.10 Reflow",
-    "Accessibility statement over 5 years out of date — last audited August 2020",
-    "Cookie consent non-compliant — no accept/reject banner; policy still references EU law",
-    "Missing alt text on images throughout HTML legislation pages (WCAG SC 1.1.1)"
-  ],
-  standard:[
-    {n:1,  point:"Understand users and their needs",       score:5, status:"partial", rationale:"No publicly visible evidence of recent user research, personas or journey mapping. The advanced search interface suggests it was designed primarily for expert users, with little evidence that non-specialist needs have been researched. GOV.UK publishes user research findings openly and scores 10/10."},
-    {n:2,  point:"Solve a whole problem for users",        score:6, status:"partial", rationale:"The site covers the full enacted legislative record comprehensively. However, users seeking Bills before Royal Assent must leave for parliament.uk, breaking the end-to-end journey. There is no contextual guidance for non-expert users."},
-    {n:3,  point:"Provide a joined-up experience",         score:5, status:"partial", rationale:"Inconsistent linking between legislation.gov.uk and parliament.uk for Bills in progress. Users navigating between the two services encounter a jarring change in design language and navigation patterns."},
-    {n:4,  point:"Make the service simple to use",         score:4, status:"fail",    rationale:"The homepage presents complex document type categories without plain-English signposting. The advanced search has a high learning curve. GOV.UK Design System principles such as one-thing-per-page are not followed."},
-    {n:5,  point:"Make sure everyone can use the service", score:3, status:"fail",    rationale:"Self-declared partial WCAG 2.1 AA compliance only. Known failures: missing alt text (SC 1.1.1), skipped headings (SC 1.3.1), images of text for formulae (SC 1.4.5), no mobile reflow at 320px (SC 1.4.10). Accessibility statement last updated August 2020."},
-    {n:6,  point:"Have a multidisciplinary team",          score:5, status:"partial", rationale:"Operated by The National Archives with TSO as technical contractor. No public evidence of a cross-functional agile team including user researchers and interaction designers."},
-    {n:7,  point:"Use agile ways of working",              score:5, status:"partial", rationale:"No public sprint notes, delivery blog or roadmap are available. The accessibility statement has not been updated since 2020, suggesting infrequent iteration cycles."},
-    {n:8,  point:"Iterate and improve frequently",         score:4, status:"fail",    rationale:"Last formal accessibility test was August 2020. No changelog or release history is publicly available. No evidence of A/B testing or a structured user feedback loop."},
-    {n:9,  point:"Create a secure service",                score:7, status:"pass",    rationale:"HTTPS correctly enforced. A named DPO is published. Data handling via TSO is documented. The ICO complaint route is signposted. Minor gap: analytics cookies fire without explicit consent."},
-    {n:10, point:"Define what success looks like",         score:4, status:"fail",    rationale:"Google Analytics used but no public performance dashboard or KPIs are published. No task completion rates, user satisfaction scores or search success metrics available publicly."},
-    {n:11, point:"Choose the right tools and technology",  score:6, status:"partial", rationale:"XML-based publishing pipeline is appropriate for the content type. Multiple output formats provide flexibility. However, the front-end does not support responsive design."},
-    {n:12, point:"Make new source code open",              score:4, status:"fail",    rationale:"Legislation data is under the Open Government Licence and an API exists, which is positive. However, the website source code does not appear to be published on GitHub."},
-    {n:13, point:"Use and contribute to open standards",   score:7, status:"pass",    rationale:"Publishes in open XML (Crown Legislation Markup Language), HTML and plain text. RSS and Atom feeds available. A public API supports data reuse. A genuine strength of the service."},
-    {n:14, point:"Operate a reliable service",             score:6, status:"partial", rationale:"Service appears stable with no significant reported outages. However, no SLA, uptime statistics or status page are published."}
-  ],
-  wcag:"The site self-declares only partial compliance with WCAG 2.1 AA and has not been updated to target WCAG 2.2 AA — the legal UK requirement since October 2024. Known failures: missing alt text (SC 1.1.1), skipped heading levels (SC 1.3.1), formulae as images of text (SC 1.4.5), no mobile reflow at 320px (SC 1.4.10), PDF links without file type indication (SC 2.4.4), misused ARIA attributes (SC 4.1.2). Accessibility statement last updated August 2020. GOV.UK scores 91/100.",
-  privacyDetail:"HTTPS enforced and a named DPO (Linda Stewart, The National Archives) is published. However, the cookie policy still references EU legislation rather than UK PECR. No granular accept/reject banner shown before Google Analytics fires. Privacy notice does not explicitly reference UK GDPR. GOV.UK scores 85/100.",
-  envDetail:"No sustainability statement published. Large volume of unoptimised PDF scans with high data transfer per page view. No evidence of green hosting commitments, lazy loading or WebP/AVIF image formats. GOV.UK scores 72/100.",
-  improvements:[
-    {title:"Achieve WCAG 2.2 AA compliance and refresh the accessibility statement", body:"Commission a full audit using Axe and WAVE alongside manual testing with disabled users. Fix alt text, the 320px reflow problem, and heading hierarchy. Republish the accessibility statement with a remediation timeline. Legal requirement under PSBAR 2018."},
-    {title:"Implement a PECR-compliant cookie consent banner", body:"Deploy a GOV.UK Design System cookie banner with separate accept/reject controls. Update documentation to reference UK PECR and UK GDPR. Google Analytics must only fire after explicit consent."},
-    {title:"Redesign homepage and search for non-expert users", body:"Introduce plain-English navigation entry points. Adopt GOV.UK Design System typography and components. Validate with user research from non-legal users before building."},
-    {title:"Build a responsive, mobile-first layout", body:"Use CSS flexbox or grid with breakpoints at 320px, 768px and 1024px. Ensure all content reflows into a single column on mobile. Test across real devices in every sprint."},
-    {title:"Publish a performance dashboard and iterate openly", body:"Define KPIs — task completion, user satisfaction, search success — and publish openly. Commit to quarterly release notes. Open-source the codebase on GitHub. Directly addresses Service Standard points 8 and 10."}
-  ]
-};
-
-// ── Generic narrative for unknown sites ──────────────────────────────────────
-const STD_POINTS = [
-  "Understand users and their needs","Solve a whole problem for users","Provide a joined-up experience",
-  "Make the service simple to use","Make sure everyone can use the service","Have a multidisciplinary team",
-  "Use agile ways of working","Iterate and improve frequently","Create a secure service",
-  "Define what success looks like","Choose the right tools and technology","Make new source code open",
-  "Use and contribute to open standards","Operate a reliable service"
-];
-const GEN_RATIONALE = [
-  "No publicly available user research or journey mapping was found. The service should publish evidence of continuous user research. GOV.UK benchmark: 10/10.",
-  "The service appears to cover its core use case but evidence of end-to-end journey design is not publicly visible. GOV.UK benchmark: 9/10.",
-  "No evidence of cross-government journey mapping or integration with related GOV.UK guidance pages was found. GOV.UK benchmark: 9/10.",
-  "The interface should be reviewed against GOV.UK Design System patterns to ensure plain English and progressive disclosure principles are followed. GOV.UK benchmark: 10/10.",
-  "A full manual WCAG 2.2 AA audit is recommended — the legal requirement under PSBAR 2018 since October 2024. An up-to-date accessibility statement must be published. GOV.UK benchmark: 9/10.",
-  "No public evidence of a cross-functional team including user researchers, interaction designers and content designers. GOV.UK benchmark: 9/10.",
-  "No public sprint notes, roadmap or delivery blog found. Evidence of iterative, user-research-driven delivery should be published. GOV.UK benchmark: 9/10.",
-  "No public changelog or evidence of regular iteration based on user feedback. Services should demonstrate continuous improvement based on data and research. GOV.UK benchmark: 9/10.",
-  "HTTPS enforcement and data handling should be verified. A named DPO, PECR-compliant cookie consent, and a UK GDPR-referenced privacy notice are all required. GOV.UK benchmark: 10/10.",
-  "No public performance dashboard or published KPIs found. Services should define and publish metrics such as task completion rate and user satisfaction. GOV.UK benchmark: 8/10.",
-  "Technology choices should be reviewed against the GDS Technology Code of Practice — including accessibility support, open standards and modern front-end practices. GOV.UK benchmark: 9/10.",
-  "No open-source code repository found. Government services are encouraged to publish source code openly on GitHub for transparency. GOV.UK benchmark: 9/10.",
-  "The service should use open standards for data formats and APIs to support reuse by third parties and other government services. GOV.UK benchmark: 10/10.",
-  "No public uptime data, SLA or status page found. Publishing availability and incident response information builds user trust. GOV.UK benchmark: 9/10."
-];
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function numClass(n){ return n>=70?"num-green":n>=50?"num-amber":"num-red"; }
-function barColor(n){ return n>=70?"#005a30":n>=50?"#b54800":"#aa2a16"; }
-function verdictClass(n){ return n>=70?"verdict-green":n>=50?"verdict-amber":"verdict-red"; }
-function verdictText(n){ return n>=70?"✅ Good":n>=50?"⚠️ Needs improvement":"🔴 Significant issues"; }
-function tagHtml(s){ const m={pass:"tag-pass",partial:"tag-partial",fail:"tag-fail",na:"tag-na"},l={pass:"Pass",partial:"Partial",fail:"Fail",na:"N/A"}; return `<span class="tag ${m[s]||"tag-na"}">${l[s]||s}</span>`; }
-function benchPill(score,bench){ const d=score-bench; if(d>=0)return`<span class="bench-pill bench-above">+${d} vs GOV.UK</span>`; if(d>=-10)return`<span class="bench-pill bench-near">${d} vs GOV.UK</span>`; return`<span class="bench-pill bench-below">${d} vs GOV.UK</span>`; }
-function today(){ return new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}); }
-function extractHost(url){ try{ return new URL(url).hostname.replace(/^www\./,""); }catch{ return url; } }
-
-function stepDone(id){ const li=document.getElementById(id); if(!li)return; li.querySelector(".step-icon").className="step-icon step-done"; li.querySelector(".step-icon").textContent="✓"; }
-function stepActive(id){ const li=document.getElementById(id); if(!li)return; li.querySelector(".step-icon").className="step-icon step-active"; li.querySelector(".step-icon").textContent=""; }
-
-// ── PageSpeed API call ────────────────────────────────────────────────────────
-async function fetchPageSpeed(url) {
-  const key = document.getElementById("apiKeyInput").value.trim();
-  const cats = "category=performance&category=accessibility&category=seo&category=best-practices";
-  let endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&${cats}`;
-  if (key) endpoint += "&key=" + encodeURIComponent(key);
-  const res = await fetch(endpoint);
-  if (!res.ok) {
-    const err = await res.json().catch(()=>({}));
-    throw new Error(err?.error?.message || "PageSpeed API returned an error (" + res.status + ")");
-  }
-  return res.json();
-}
-
-// ── Build scores from PSI response ───────────────────────────────────────────
-function parsePageSpeed(data) {
-  const cats = data?.lighthouseResult?.categories || {};
-  const audits = data?.lighthouseResult?.audits || {};
-  const perf    = Math.round((cats.performance?.score    || 0) * 100);
-  const access  = Math.round((cats.accessibility?.score  || 0) * 100);
-  const seo     = Math.round((cats.seo?.score            || 0) * 100);
-  const bp      = Math.round((cats["best-practices"]?.score || 0) * 100);
-
-  // Core Web Vitals display values
-  const metrics = [
-    { label:"First Contentful Paint",   val: audits["first-contentful-paint"]?.displayValue },
-    { label:"Largest Contentful Paint", val: audits["largest-contentful-paint"]?.displayValue },
-    { label:"Total Blocking Time",      val: audits["total-blocking-time"]?.displayValue },
-    { label:"Cumulative Layout Shift",  val: audits["cumulative-layout-shift"]?.displayValue },
-    { label:"Speed Index",              val: audits["speed-index"]?.displayValue },
-    { label:"Time to Interactive",      val: audits["interactive"]?.displayValue }
-  ].filter(m => m.val);
-
-  // Extract top Lighthouse opportunities as issues
-  const opps = Object.values(audits)
-    .filter(a => a.score !== null && a.score < 0.9 && a.details?.type === "opportunity" && a.description)
-    .sort((a,b) => (a.score||0) - (b.score||0))
-    .slice(0, 3)
-    .map(a => a.title + (a.displayValue ? " — " + a.displayValue : ""));
-
-  return { perf, access, seo, bp, metrics, opps };
-}
-
-// ── Run audit ─────────────────────────────────────────────────────────────────
-async function runAudit() {
-  const raw = document.getElementById("urlInput").value.trim();
-  if (!raw) { alert("Please enter a website URL."); return; }
-  let url = raw;
-  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-
-  // Reset UI
-  document.getElementById("errorBanner").style.display = "none";
-  document.getElementById("report").style.display = "none";
-  document.getElementById("loading").style.display = "block";
-  document.getElementById("auditBtn").disabled = true;
-  document.getElementById("auditBtn").textContent = "Auditing…";
-  ["step1","step2","step3","step4","step5"].forEach(id => {
-    const li = document.getElementById(id);
-    if (li) { li.querySelector(".step-icon").className="step-icon step-wait"; li.querySelector(".step-icon").textContent=""; }
-  });
-  stepActive("step1");
-
-  try {
-    const psiData = await fetchPageSpeed(url);
-    stepDone("step1"); stepActive("step2");
-    const { perf, access, seo, bp, metrics, opps } = parsePageSpeed(psiData);
-    stepDone("step2"); stepActive("step3");
-    await tick();
-    stepDone("step3"); stepActive("step4");
-    await tick();
-    stepDone("step4"); stepActive("step5");
-
-    const host = extractHost(url);
-    const isLeg = host === "legislation.gov.uk" || host === "www.legislation.gov.uk";
-    let report;
-
-    if (isLeg) {
-      // Blend real Lighthouse scores with our researched data
-      const privacy = LEG_EXTRA.privacy, security = LEG_EXTRA.security, env = LEG_EXTRA.env;
-      const overall = Math.round((perf + access + seo + bp + privacy + security + env) / 7);
-      const extraIssues = opps.length > 0
-        ? [opps[0], ...LEG_EXTRA.issues.slice(0, 4)]
-        : LEG_EXTRA.issues;
-      report = {
-        site: "legislation.gov.uk",
-        meta: "Managed by The National Archives · Audited " + today(),
-        overall, isReal: true, isPartial: true,
-        scores: { perf, access, seo, privacy, security, env },
-        issues: extraIssues,
-        standard: LEG_EXTRA.standard,
-        wcag: LEG_EXTRA.wcag, privacyDetail: LEG_EXTRA.privacyDetail,
-        envDetail: LEG_EXTRA.envDetail, improvements: LEG_EXTRA.improvements,
-        metrics
-      };
-    } else {
-      // Use real PSI scores, estimate the rest
-      const seed = host.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
-      const rng = (min,max,o=0) => min+((seed+o)%(max-min+1));
-      const privacy=rng(40,72,4), security=rng(45,80,5), env=rng(30,65,6);
-      const overall = Math.round((perf + access + seo + bp + privacy + security + env) / 7);
-      const stdScores = STD_POINTS.map((_,i)=>rng(3,9,i+10));
-      const statuses  = stdScores.map(s=>s>=8?"pass":s>=5?"partial":"fail");
-      const lhIssues = opps.length > 0 ? opps : [];
-      const baseIssues = [
-        "WCAG 2.2 AA compliance — a manual audit is strongly recommended (GOV.UK benchmark: 91/100)",
-        "Cookie consent mechanism should be reviewed against current UK PECR requirements",
-        "Mobile responsiveness — test all pages at 320px viewport width (WCAG SC 1.4.10 Reflow)",
-        "Privacy notice should explicitly reference UK GDPR and name a Data Protection Officer",
-        "Performance — review page weight, image optimisation and third-party script loading"
-      ];
-      const issues = [...lhIssues, ...baseIssues].slice(0,5);
-      report = {
-        site: host, meta: "Live Lighthouse audit · " + today(),
-        overall, isReal: true, isPartial: false,
-        scores: { perf, access, seo, privacy, security, env },
-        issues,
-        standard: STD_POINTS.map((point,i)=>({n:i+1,point,score:stdScores[i],status:statuses[i],rationale:GEN_RATIONALE[i]})),
-        wcag: "Performance, accessibility and SEO scores above are real Lighthouse data from Google. A full manual WCAG 2.2 AA audit of "+host+" is needed to verify specific failure points: alt text (SC 1.1.1), heading hierarchy (SC 1.3.1), colour contrast (SC 1.4.3), keyboard navigation (SC 2.1.1), mobile reflow at 320px (SC 1.4.10). WCAG 2.2 AA has been the legal UK requirement since October 2024. GOV.UK scores 91/100. Your Lighthouse accessibility score: "+access+"/100.",
-        privacyDetail: "Verify: HTTPS enforcement, PECR-compliant cookie consent with accept/reject controls, a privacy notice explicitly referencing UK GDPR with a named DPO, and correct post-Brexit language. GOV.UK scores 85/100. Estimated score: "+privacy+"/100.",
-        envDetail: "Review hosting provider carbon commitments, audit PDF delivery, implement lazy loading and WebP image formats, and remove unnecessary third-party scripts. GOV.UK scores 72/100. Estimated score: "+env+"/100.",
-        improvements:[
-          {title:"Commission a full WCAG 2.2 AA accessibility audit", body:"Use Axe and WAVE alongside manual testing with disabled users. Publish a new accessibility statement with a remediation timeline. Legal requirement under PSBAR 2018."},
-          {title:"Review cookie consent against UK PECR", body:"A GOV.UK Design System-compliant banner with separate accept/reject controls is required. Analytics tools must not fire before explicit consent."},
-          {title:"Test and fix mobile responsiveness", body:"Test all pages at 320px viewport for WCAG SC 1.4.10 compliance. Use CSS flexbox or grid so content reflows into a single column on small screens."},
-          {title:"Publish a performance dashboard", body:"Define and publish KPIs — task completion rate, user satisfaction, search success — openly and report quarterly."},
-          {title:"Align with the GOV.UK Design System", body:"Adopt GOV.UK Design System components, typography and interaction patterns for a consistent, accessible experience."}
-        ],
-        metrics
-      };
-    }
-
-    stepDone("step5");
-    await tick();
-    renderReport(report, url);
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("report").style.display = "block";
-    document.getElementById("report").scrollIntoView({behavior:"smooth"});
-
-  } catch(e) {
-    document.getElementById("loading").style.display = "none";
-    const banner = document.getElementById("errorBanner");
-    banner.style.display = "block";
-    banner.textContent = "Could not complete the audit: " + e.message + ". Check the URL is publicly accessible and try again. If you are hitting rate limits, add a free Google API key above.";
-  } finally {
-    document.getElementById("auditBtn").disabled = false;
-    document.getElementById("auditBtn").textContent = "Run audit";
-  }
-}
-
-function tick(){ return new Promise(r=>setTimeout(r,300)); }
-
-// ── Render ───────────────────────────────────────────────────────────────────
-function renderReport(d, originalUrl) {
-  document.getElementById("r-site").innerHTML = d.site + `<span>${d.meta}</span>`;
-  const badge = document.getElementById("r-data-badge");
-  if (d.isPartial) { badge.textContent = "✓ Real Lighthouse scores + researched data"; badge.className="report-data-badge badge-partial"; }
-  else { badge.textContent = "✓ Real Lighthouse scores"; badge.className="report-data-badge badge-real"; }
-
-  const ov = document.getElementById("r-overall");
-  ov.textContent = d.overall; ov.className = "overall-score";
-  const verd = document.getElementById("r-verdict");
-  verd.textContent = verdictText(d.overall);
-  verd.className = "overall-verdict " + verdictClass(d.overall);
-
-  // Screenshot
-  const img = document.getElementById("screenshotImg");
-  img.src = "https://mini.s-shot.ru/1280x800/JPG/400/Z100/?" + encodeURIComponent(originalUrl || "https://"+d.site);
-  img.style.objectFit="cover"; img.style.padding="0";
-  img.onerror = () => { img.src="https://www.google.com/s2/favicons?domain="+encodeURIComponent(originalUrl||d.site)+"&sz=128"; img.style.objectFit="contain"; img.style.padding="16px"; img.onerror=null; };
-  document.getElementById("screenshotSiteLabel").textContent = d.site;
-  document.getElementById("screenshotStrategy").textContent = "Audited on mobile strategy via Google PageSpeed Insights";
-
-  // Benchmark bar
-  const fill = document.getElementById("benchFill");
-  fill.style.width = d.overall + "%";
-  fill.style.background = barColor(d.overall);
-  const diff = d.overall - GOVUK.overall;
-  document.getElementById("benchNumbers").textContent =
-    "Your score: "+d.overall+"/100  |  GOV.UK: "+GOVUK.overall+"/100  ("+(diff>=0?"+":"")+diff+")";
-
-  // Score list — mark which are real
-  const dims = [
-    {id:"perf",    label:"Performance",    sub:"Live from Lighthouse",  bench:GOVUK.perf,    real:true},
-    {id:"access",  label:"Accessibility",  sub:"Live from Lighthouse",  bench:GOVUK.access,  real:true},
-    {id:"seo",     label:"SEO",            sub:"Live from Lighthouse",  bench:GOVUK.seo,     real:true},
-    {id:"privacy", label:"Privacy",        sub:d.isPartial?"Researched":"Estimated", bench:GOVUK.privacy, real:d.isPartial},
-    {id:"security",label:"Security",       sub:d.isPartial?"Researched":"Estimated", bench:GOVUK.security,real:d.isPartial},
-    {id:"env",     label:"Sustainability", sub:"Estimated",             bench:GOVUK.env,     real:false}
-  ];
-  document.getElementById("scoreList").innerHTML = dims.map(dim=>{
-    const val=d.scores[dim.id];
-    const srcTag = dim.real ? `<span class="source-tag source-real">LIVE</span>` : `<span class="source-tag source-est">EST.</span>`;
-    return `<div class="score-list-item">
-      <div class="score-list-label">${dim.label}${srcTag}<small>${dim.sub}</small></div>
-      <div class="score-list-num ${numClass(val)}">${val}</div>
-      <div class="score-list-bar-wrap">
-        <div class="score-bar-track">
-          <div class="score-bar-fill" style="width:${val}%;background:${barColor(val)}"></div>
-          <div class="score-bar-bench-marker" style="left:${dim.bench}%" title="GOV.UK: ${dim.bench}"></div>
+      <!-- Results section that the JS will fill -->
+      <section class="section section-muted" aria-live="polite">
+        <h2>Assessment results</h2>
+        <div id="results">
+          <p>No assessment has been run yet. Enter a URL and context above to get started.</p>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span class="score-bar-bench-label">GOV.UK: ${dim.bench}/100</span>
-          ${benchPill(val,dim.bench)}
-        </div>
-      </div>
-    </div>`;
-  }).join("");
+      </section>
 
-  // Lighthouse detail section
-  if (d.metrics && d.metrics.length > 0) {
-    document.getElementById("lhSection").style.display = "block";
-    document.getElementById("lhItems").innerHTML = d.metrics.map(m=>
-      `<li><span>${m.label}</span><span>${m.val}</span></li>`
-    ).join("");
-  } else {
-    document.getElementById("lhSection").style.display = "none";
-  }
+      <!-- Optional: explain what the scores mean -->
+      <section class="section">
+        <h2>How scores are intended to work</h2>
+        <h3>Overall score (0–100)</h3>
+        <p>
+          90–100: broadly good; smaller issues to address. 50–89: needs improvement; fix the
+          top 5 issues first. 0–49: likely serious problems for users or compliance.
+        </p>
 
-  // Issues
-  document.getElementById("r-issues").innerHTML = d.issues.map((txt,i)=>
-    `<li><span class="issue-num">${i+1}</span><span>${txt}</span></li>`
-  ).join("");
+        <h3>Service Standard</h3>
+        <p>
+          Selected points are scored out of 5 and given a red/amber/green rating in a way that
+          loosely mirrors official Service Standard reports for digital services.
+        </p>
 
-  // Service Standard
-  document.getElementById("r-standard").innerHTML = d.standard.map((row,i)=>{
-    const gs=GOVUK.standard[i];
-    return `<div class="standard-card">
-      <div class="standard-card-header">
-        <div class="std-num">${row.n}</div>
-        <div class="std-title">${row.point}</div>
-        <div class="std-badges">
-          <span class="std-score-badge">${row.score}/10</span>
-          ${tagHtml(row.status)}
-          <span class="govuk-ref">GOV.UK: <strong>${gs}/10</strong></span>
-        </div>
-      </div>
-      <div class="standard-card-body">${row.rationale}</div>
-    </div>`;
-  }).join("");
+        <h3>WCAG, privacy, SEO, environment</h3>
+        <p>
+          These sections highlight likely risks (for example, missing alt text, unclear cookie
+          consent, very heavy pages) so teams can prioritise work alongside full accessibility
+          and security reviews.
+        </p>
+      </section>
 
-  document.getElementById("r-wcag").textContent = d.wcag;
-  document.getElementById("r-privacy-detail").textContent = d.privacyDetail;
-  document.getElementById("r-env-detail").textContent = d.envDetail;
-  document.getElementById("r-improvements").innerHTML = d.improvements.map((imp,i)=>
-    `<div class="improvement"><h4>${i+1}. ${imp.title}</h4><p>${imp.body}</p></div>`
-  ).join("");
-  document.getElementById("r-footer-site").textContent = "Report for: " + d.site;
-  document.getElementById("r-footer-date").textContent = "Generated " + today();
-}
+    </div>
+  </main>
 
-function loadExample(){
-  document.getElementById("urlInput").value="https://www.legislation.gov.uk";
-  runAudit();
-}
+  <footer>
+    This is an experimental tool. Always run a full Service Standard assessment and
+    accessibility audit for live public services.
+  </footer>
 
-document.addEventListener("DOMContentLoaded",()=>{
-  document.getElementById("urlInput").addEventListener("keydown",e=>{ if(e.key==="Enter") runAudit(); });
+  <script>
+    (function () {
+      const form = document.getElementById('siteaudit-form');
+      const statusEl = document.getElementById('siteaudit-status');
+      const resultsEl = document.getElementById('results');
 
-  pendo.initialize({
-    visitor: {
-      id: ''
-    }
-  });
-});
-</script>
+      // TODO: replace this with the real n8n webhook URL when your workflow is ready
+      const WEBHOOK_URL = 'https://YOUR_N8N_WEBHOOK_URL_HERE';
+
+      if (!form) return;
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        statusEl.textContent = 'Running assessment…';
+        resultsEl.innerHTML = '';
+
+        const formData = {
+          url: document.getElementById('url').value.trim(),
+          page_type: document.getElementById('page_type').value,
+          main_user: document.getElementById('main_user').value.trim(),
+          user_need: document.getElementById('user_need').value.trim(),
+          desired_outcome: document.getElementById('desired_outcome').value.trim()
+        };
+
+        try {
+          const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          });
+
+          if (!response.ok) {
+            throw new Error('Request failed with status ' + response.status);
+          }
+
+          const data = await response.json();
+          renderResults(data);
+          statusEl.textContent = 'Assessment complete.';
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = 'Sorry, something went wrong running the assessment.';
+          resultsEl.innerHTML = '<p>Unable to display results.</p>';
+        }
+      });
+
+      function renderResults(data) {
+        if (!data || typeof data !== 'object') {
+          resultsEl.innerHTML = '<p>Unexpected response format.</p>';
+          return;
+        }
+
+        const {
+          overall_score,
+          summary,
+          service_standard,
+          wcag,
+          performance_seo,
+          security_privacy,
+          environment,
+          top_5_issues
+        } = data;
+
+        let html = '';
+
+        if (typeof overall_score === 'number') {
+          html += '<p class="score-large"><strong>Overall score:</strong> ' +
+            overall_score + '/100</p>';
+        }
+
+        if (summary) {
+          html += '<p><strong>Summary:</strong> ' + escapeHtml(summary) + '</p>';
+        }
+
+        if (Array.isArray(top_5_issues) && top_5_issues.length) {
+          html += '<h3>Top 5 issues to address</h3><ul>';
+          top_5_issues.forEach(function (issue) {
+            html += '<li>' + escapeHtml(issue) + '</li>';
+          });
+          html += '</ul>';
+        }
+
+        if (service_standard && typeof service_standard === 'object') {
+          html += '<h3>UK Government Service Standard</h3><ul>';
+          Object.keys(service_standard).forEach(function (key) {
+            const point = service_standard[key];
+            if (!point) return;
+            html += '<li><strong>' + escapeHtml(key) + ':</strong> ' +
+              (point.rating ? escapeHtml(point.rating) : '') +
+              (typeof point.score === 'number' ? ' (score ' + point.score + '/5)' : '');
+            if (Array.isArray(point.comments) && point.comments.length) {
+              html += '<br>' + escapeHtml(point.comments[0]);
+            }
+            html += '</li>';
+          });
+          html += '</ul>';
+        }
+
+        if (wcag) {
+          html += '<h3>WCAG 2.2 accessibility</h3>';
+          if (wcag.status) {
+            html += '<p><strong>Status:</strong> ' + escapeHtml(wcag.status) + '</p>';
+          }
+          if (Array.isArray(wcag.issues) && wcag.issues.length) {
+            html += '<ul>';
+            wcag.issues.forEach(function (issue) {
+              html += '<li>' + escapeHtml(issue) + '</li>';
+            });
+            html += '</ul>';
+          }
+        }
+
+        if (performance_seo) {
+          html += '<h3>Performance and SEO</h3>';
+          if (typeof performance_seo.score === 'number') {
+            html += '<p><strong>Score:</strong> ' + performance_seo.score + '/10</p>';
+          }
+          if (Array.isArray(performance_seo.comments) && performance_seo.comments.length) {
+            html += '<ul>';
+            performance_seo.comments.forEach(function (c) {
+              html += '<li>' + escapeHtml(c) + '</li>';
+            });
+            html += '</ul>';
+          }
+        }
+
+        if (security_privacy) {
+          html += '<h3>Privacy and security</h3>';
+          if (typeof security_privacy.score === 'number') {
+            html += '<p><strong>Score:</strong> ' + security_privacy.score + '/10</p>';
+          }
+          if (Array.isArray(security_privacy.comments) && security_privacy.comments.length) {
+            html += '<ul>';
+            security_privacy.comments.forEach(function (c) {
+              html += '<li>' + escapeHtml(c) + '</li>';
+            });
+            html += '</ul>';
+          }
+        }
+
+        if (environment) {
+          html += '<h3>Environmental sustainability</h3>';
+          if (typeof environment.score === 'number') {
+            html += '<p><strong>Score:</strong> ' + environment.score + '/10</p>';
+          }
+          if (Array.isArray(environment.comments) && environment.comments.length) {
+            html += '<ul>';
+            environment.comments.forEach(function (c) {
+              html += '<li>' + escapeHtml(c) + '</li>';
+            });
+            html += '</ul>';
+          }
+        }
+
+        resultsEl.innerHTML = html || '<p>No results to display.</p>';
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;/')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    })();
+  </script>
 </body>
 </html>
