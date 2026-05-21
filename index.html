@@ -437,6 +437,17 @@ async function runAudit() {
   let url = raw;
   if (!/^https?:\/\//i.test(url)) url = "https://" + url;
 
+  // Track audit initiation
+  if (typeof pendo !== "undefined") {
+    pendo.track("audit_initiated", {
+      url: url,
+      hostname: extractHost(url),
+      isExampleUrl: url === "https://www.legislation.gov.uk",
+      hasApiKey: !!document.getElementById("apiKeyInput").value.trim(),
+      inputMethod: document.activeElement && document.activeElement.id === "urlInput" ? "enter_key" : "button_click"
+    });
+  }
+
   // Reset UI
   document.getElementById("errorBanner").style.display = "none";
   document.getElementById("report").style.display = "none";
@@ -453,6 +464,20 @@ async function runAudit() {
     const psiData = await fetchPageSpeed(url);
     stepDone("step1"); stepActive("step2");
     const { perf, access, seo, bp, metrics, opps } = parsePageSpeed(psiData);
+
+    // Track successful Lighthouse data fetch
+    if (typeof pendo !== "undefined") {
+      pendo.track("lighthouse_data_fetched", {
+        url: url,
+        performanceScore: perf,
+        accessibilityScore: access,
+        seoScore: seo,
+        bestPracticesScore: bp,
+        metricsCount: metrics.length,
+        opportunitiesCount: opps.length
+      });
+    }
+
     stepDone("step2"); stepActive("step3");
     await tick();
     stepDone("step3"); stepActive("step4");
@@ -481,6 +506,41 @@ async function runAudit() {
         envDetail: LEG_EXTRA.envDetail, improvements: LEG_EXTRA.improvements,
         metrics
       };
+
+      // Track service standard assessment (researched data)
+      if (typeof pendo !== "undefined") {
+        const stdScoresArr = LEG_EXTRA.standard.map(s => s.score);
+        const avgStd = Math.round(stdScoresArr.reduce((a,b) => a+b, 0) / stdScoresArr.length * 10) / 10;
+        pendo.track("service_standard_assessed", {
+          url: url,
+          hostname: "legislation.gov.uk",
+          averageScore: avgStd,
+          passCount: LEG_EXTRA.standard.filter(s => s.status === "pass").length,
+          partialCount: LEG_EXTRA.standard.filter(s => s.status === "partial").length,
+          failCount: LEG_EXTRA.standard.filter(s => s.status === "fail").length,
+          lowestScoringPoint: LEG_EXTRA.standard.reduce((a,b) => a.score <= b.score ? a : b).point,
+          highestScoringPoint: LEG_EXTRA.standard.reduce((a,b) => a.score >= b.score ? a : b).point,
+          isResearchedData: true
+        });
+      }
+
+      // Track report generated (legislation.gov.uk)
+      if (typeof pendo !== "undefined") {
+        const legStdScores = LEG_EXTRA.standard.map(s => s.score);
+        const legAvgStd = Math.round(legStdScores.reduce((a,b) => a+b, 0) / legStdScores.length * 10) / 10;
+        pendo.track("report_generated", {
+          url: url,
+          hostname: "legislation.gov.uk",
+          overallScore: overall,
+          isKnownSite: true,
+          dataSource: "researched",
+          issueCount: extraIssues.length,
+          improvementCount: LEG_EXTRA.improvements.length,
+          serviceStandardAvgScore: legAvgStd,
+          dimensionsBelowBenchmark: [perf < GOVUK.perf, access < GOVUK.access, seo < GOVUK.seo, privacy < GOVUK.privacy, security < GOVUK.security, env < GOVUK.env].filter(Boolean).length,
+          dimensionsAboveBenchmark: [perf >= GOVUK.perf, access >= GOVUK.access, seo >= GOVUK.seo, privacy >= GOVUK.privacy, security >= GOVUK.security, env >= GOVUK.env].filter(Boolean).length
+        });
+      }
     } else {
       // Use real PSI scores, estimate the rest
       const seed = host.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
@@ -516,6 +576,39 @@ async function runAudit() {
         ],
         metrics
       };
+
+      // Track service standard assessment (estimated data)
+      if (typeof pendo !== "undefined") {
+        const avgStdGen = Math.round(stdScores.reduce((a,b) => a+b, 0) / stdScores.length * 10) / 10;
+        pendo.track("service_standard_assessed", {
+          url: url,
+          hostname: host,
+          averageScore: avgStdGen,
+          passCount: statuses.filter(s => s === "pass").length,
+          partialCount: statuses.filter(s => s === "partial").length,
+          failCount: statuses.filter(s => s === "fail").length,
+          lowestScoringPoint: STD_POINTS[stdScores.indexOf(Math.min(...stdScores))],
+          highestScoringPoint: STD_POINTS[stdScores.indexOf(Math.max(...stdScores))],
+          isResearchedData: false
+        });
+      }
+
+      // Track report generated (generic site)
+      if (typeof pendo !== "undefined") {
+        const avgStdGen = Math.round(stdScores.reduce((a,b) => a+b, 0) / stdScores.length * 10) / 10;
+        pendo.track("report_generated", {
+          url: url,
+          hostname: host,
+          overallScore: overall,
+          isKnownSite: false,
+          dataSource: "estimated",
+          issueCount: issues.length,
+          improvementCount: 5,
+          serviceStandardAvgScore: avgStdGen,
+          dimensionsBelowBenchmark: [perf < GOVUK.perf, access < GOVUK.access, seo < GOVUK.seo, privacy < GOVUK.privacy, security < GOVUK.security, env < GOVUK.env].filter(Boolean).length,
+          dimensionsAboveBenchmark: [perf >= GOVUK.perf, access >= GOVUK.access, seo >= GOVUK.seo, privacy >= GOVUK.privacy, security >= GOVUK.security, env >= GOVUK.env].filter(Boolean).length
+        });
+      }
     }
 
     stepDone("step5");
@@ -525,11 +618,43 @@ async function runAudit() {
     document.getElementById("report").style.display = "block";
     document.getElementById("report").scrollIntoView({behavior:"smooth"});
 
+    // Track successful audit completion
+    if (typeof pendo !== "undefined") {
+      pendo.track("audit_completed", {
+        url: url,
+        hostname: report.site,
+        overallScore: report.overall,
+        performanceScore: report.scores.perf,
+        accessibilityScore: report.scores.access,
+        seoScore: report.scores.seo,
+        privacyScore: report.scores.privacy,
+        securityScore: report.scores.security,
+        sustainabilityScore: report.scores.env,
+        verdict: verdictText(report.overall),
+        isPartialData: !!report.isPartial,
+        isRealData: !!report.isReal,
+        isExampleSite: report.site === "legislation.gov.uk",
+        issueCount: report.issues.length,
+        metricsCount: (report.metrics || []).length,
+        govukBenchmarkDiff: report.overall - GOVUK.overall
+      });
+    }
+
   } catch(e) {
     document.getElementById("loading").style.display = "none";
     const banner = document.getElementById("errorBanner");
     banner.style.display = "block";
     banner.textContent = "Could not complete the audit: " + e.message + ". Check the URL is publicly accessible and try again. If you are hitting rate limits, add a free Google API key above.";
+
+    // Track audit failure
+    if (typeof pendo !== "undefined") {
+      pendo.track("audit_failed", {
+        url: url,
+        hostname: extractHost(url),
+        errorMessage: (e.message || "Unknown error").substring(0, 200),
+        hasApiKey: !!document.getElementById("apiKeyInput").value.trim()
+      });
+    }
   } finally {
     document.getElementById("auditBtn").disabled = false;
     document.getElementById("auditBtn").textContent = "Run audit";
