@@ -1,87 +1,95 @@
 <!DOCTYPE html>
-<html lang="en" class="govuk-template">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Check a public sector website</title>
+  <title>Check a website – SiteAudit</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Simple GOV.UK-inspired styling -->
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f3f2f1;
       color: #0b0c0c;
     }
-    .govuk-width-container {
+    main {
       max-width: 960px;
       margin: 0 auto;
-      padding: 1.5rem 1rem 3rem;
-      background: #fff;
+      padding: 2rem 1rem 3rem;
+      background: #ffffff;
     }
-    header {
-      border-bottom: 2px solid #1d70b8;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.5rem;
-    }
-    header h1 {
-      margin: 0;
+    h1 {
       font-size: 2rem;
+      margin: 0 0 0.5rem;
     }
-    header p {
-      margin: 0.25rem 0 0;
-      color: #505a5f;
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
     }
+    h3 {
+      font-size: 1.2rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.35rem;
+    }
+    p {
+      margin: 0 0 0.75rem;
+    }
+    ul {
+      margin: 0 0 0.75rem;
+      padding-left: 1.2rem;
+    }
+
     form {
-      margin-bottom: 2rem;
-      padding: 1rem 1.25rem 1.25rem;
       border: 1px solid #b1b4b6;
+      padding: 1rem 1.25rem 1.25rem;
       border-radius: 4px;
       background: #f8f8f8;
+      margin-bottom: 1.5rem;
     }
-    .govuk-form-group {
-      margin-bottom: 1rem;
-    }
-    .govuk-label {
+    label {
       display: block;
       font-weight: 600;
       margin-bottom: 0.25rem;
     }
-    .govuk-hint {
+    .hint {
       display: block;
       font-size: 0.9rem;
       color: #505a5f;
       margin-bottom: 0.25rem;
     }
-    .govuk-input,
-    .govuk-select,
-    .govuk-textarea {
+    input[type="text"],
+    input[type="url"],
+    select,
+    textarea {
       width: 100%;
-      box-sizing: border-box;
       padding: 0.5rem;
       border-radius: 2px;
       border: 1px solid #b1b4b6;
       font: inherit;
+      margin-bottom: 0.75rem;
     }
-    .govuk-button {
+    textarea {
+      resize: vertical;
+    }
+    button[type="submit"] {
       display: inline-block;
-      margin-top: 0.5rem;
       padding: 0.6rem 1.2rem;
       background: #1d70b8;
       color: #fff;
-      text-decoration: none;
       border-radius: 4px;
       border: none;
       cursor: pointer;
       font-weight: 600;
     }
-    .govuk-button:hover {
+    button[type="submit"]:hover {
       background: #003078;
     }
-    .govuk-body {
-      margin: 0 0 0.75rem;
-    }
-    #assessment-status {
+
+    #status {
       margin-top: 0.75rem;
       font-size: 0.95rem;
       color: #d4351c;
@@ -122,16 +130,7 @@
       100% { left: 100%; }
     }
 
-    #assessment-results h2,
-    #assessment-results h3,
-    #assessment-results h4 {
-      margin-top: 1.25rem;
-      margin-bottom: 0.5rem;
-    }
-    #assessment-results ul {
-      padding-left: 1.2rem;
-    }
-    #assessment-results pre {
+    #results pre {
       white-space: pre-wrap;
       background: #f8f8f8;
       padding: 0.75rem;
@@ -143,67 +142,51 @@
   </style>
 </head>
 <body>
-  <div class="govuk-width-container">
-    <header>
-      <h1>Check a public sector website</h1>
-      <p>Get an AI‑assisted assessment against the Service Standard, WCAG 2.2, privacy, SEO and sustainability.</p>
-    </header>
+  <main>
+    <h1>Check a website</h1>
+    <p>Enter any public sector URL to get an assessment against the Service Standard, WCAG 2.2, privacy, SEO and sustainability.</p>
 
-    <main>
-      <section>
-        <form id="site-audit-form">
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="url">URL to assess</label>
-            <span class="govuk-hint">Enter a full URL starting with https:// (for example, https://www.legislation.gov.uk)</span>
-            <input class="govuk-input" id="url" name="url" type="url" required>
-          </div>
+    <form>
+      <label for="url">URL to assess</label>
+      <span class="hint">Enter a full URL starting with https:// (for example, https://www.legislation.gov.uk)</span>
+      <input id="url" name="url" type="url" required>
 
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="page_type">Page type</label>
-            <span class="govuk-hint">Roughly what kind of page is this?</span>
-            <select class="govuk-select" id="page_type" name="page_type">
-              <option value="start">Start page</option>
-              <option value="transactional">Transactional journey</option>
-              <option value="guidance">Guidance or information</option>
-              <option value="campaign">Campaign or marketing</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+      <label for="page-type">Page type</label>
+      <span class="hint">Roughly what kind of page is this?</span>
+      <select id="page-type" name="page_type">
+        <option value="start">Start page</option>
+        <option value="transactional">Transactional journey</option>
+        <option value="guidance">Guidance or information</option>
+        <option value="campaign">Campaign or marketing</option>
+        <option value="other">Other</option>
+      </select>
 
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="main_user">Main user</label>
-            <span class="govuk-hint">For example, “member of the public applying for a licence” or “caseworker processing claims”.</span>
-            <input class="govuk-input" id="main_user" name="main_user" type="text">
-          </div>
+      <label for="main-user">Main user</label>
+      <span class="hint">For example, “member of the public applying for a licence” or “caseworker processing claims”.</span>
+      <input id="main-user" name="main_user" type="text">
 
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="user_need">User need</label>
-            <span class="govuk-hint">Describe what the user is trying to achieve in one sentence.</span>
-            <textarea class="govuk-textarea" id="user_need" name="user_need" rows="2"></textarea>
-          </div>
+      <label for="user-need">User need</label>
+      <span class="hint">Describe what the user is trying to achieve in one sentence.</span>
+      <textarea id="user-need" name="user_need" rows="2"></textarea>
 
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="desired_outcome">Desired outcome for the team</label>
-            <span class="govuk-hint">What are you hoping to learn or improve from this assessment?</span>
-            <textarea class="govuk-textarea" id="desired_outcome" name="desired_outcome" rows="2"></textarea>
-          </div>
+      <label for="desired-outcome">Desired outcome for the team</label>
+      <span class="hint">What are you hoping to learn or improve from this assessment?</span>
+      <textarea id="desired-outcome" name="desired_outcome" rows="2"></textarea>
 
-          <button type="submit" class="govuk-button">Run assessment</button>
-        </form>
+      <button type="submit">Run assessment</button>
+    </form>
 
-        <div id="assessment-status" class="govuk-body"></div>
-        <div id="assessment-loading" style="display:none;"></div>
-      </section>
+    <p id="status"></p>
+    <div id="assessment-loading" style="display:none;"></div>
 
-      <section id="assessment-results"></section>
-    </main>
-  </div>
+    <section id="results"></section>
+  </main>
 
   <script>
-    const form = document.querySelector('#site-audit-form');
-    const resultsEl = document.querySelector('#assessment-results');
-    const statusEl = document.querySelector('#assessment-status');
-    const loadingBarEl = document.querySelector('#assessment-loading');
+    const form = document.querySelector('form');
+    const resultsEl = document.getElementById('results');
+    const statusEl = document.getElementById('status');
+    const loadingBarEl = document.getElementById('assessment-loading');
 
     function escapeHtml(str) {
       return String(str)
@@ -233,23 +216,25 @@
       loadingBarEl.innerHTML = '';
     }
 
-    async function runAssessment(event) {
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      const url = form.querySelector('[name="url"]').value.trim();
-      const pageType = form.querySelector('[name="page_type"]').value;
-      const mainUser = form.querySelector('[name="main_user"]').value.trim();
-      const userNeed = form.querySelector('[name="user_need"]').value.trim();
-      const desiredOutcome = form.querySelector('[name="desired_outcome"]').value.trim();
+      const url = document.getElementById('url').value.trim();
+      const pageType = document.getElementById('page-type').value;
+      const mainUser = document.getElementById('main-user').value.trim();
+      const userNeed = document.getElementById('user-need').value.trim();
+      const desiredOutcome = document.getElementById('desired-outcome').value.trim();
 
       resultsEl.innerHTML = '';
       statusEl.textContent = '';
       showLoading();
 
       try {
-        const res = await fetch('http://localhost:5678/webhook-test/siteaudit-assess', {
+        const response = await fetch('http://localhost:5678/webhook-test/siteaudit-assess', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             url,
             page_type: pageType,
@@ -259,19 +244,19 @@
           }),
         });
 
-        if (!res.ok) {
-          throw new Error('Assessment API returned ' + res.status);
+        if (!response.ok) {
+          throw new Error('Assessment API returned ' + response.status);
         }
 
-        const data = await res.json();
+        const data = await response.json();
         hideLoading();
         renderResults(data);
-      } catch (err) {
+      } catch (error) {
         hideLoading();
-        console.error(err);
+        console.error(error);
         statusEl.textContent = 'Sorry, something went wrong running the assessment.';
       }
-    }
+    });
 
     function renderResults(data) {
       if (!data || (typeof data.overall_score === 'undefined' && !data.summary)) {
@@ -378,8 +363,6 @@
 
       resultsEl.innerHTML = html;
     }
-
-    form.addEventListener('submit', runAssessment);
   </script>
 </body>
 </html>
