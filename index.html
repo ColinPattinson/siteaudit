@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Website Quality Checker</title>
+  <script>
+  (function(apiKey){
+      (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+      v=['initialize','identify','updateOptions','pageLoad','track', 'trackAgent'];for(w=0,x=v.length;w<x;++w)(function(m){
+      o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+      y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+      z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+  })('813d5815-7b68-4289-ac60-0725393711e7');
+  </script>
   <meta name="description" content="Check how well a government or public sector website meets UK accessibility, service standard and privacy requirements." />
   <style>
     :root {
@@ -644,6 +653,12 @@ function loadExample(){
 
 document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("urlInput").addEventListener("keydown",e=>{ if(e.key==="Enter") runAudit(); });
+
+  pendo.initialize({
+    visitor: {
+      id: ''
+    }
+  });
 });
 </script>
 </body>
