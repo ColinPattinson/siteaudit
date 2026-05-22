@@ -1,368 +1,371 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Check a website – SiteAudit</title>
+  <meta charset="UTF-8">
+  <title>Service Assessment</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <!-- Simple styling just so it is readable -->
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
     body {
-      margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.5rem;
       background: #f3f2f1;
       color: #0b0c0c;
     }
-    main {
+    h1, h2, h3 {
+      font-weight: 600;
+      margin-top: 1.5rem;
+    }
+    .container {
       max-width: 960px;
       margin: 0 auto;
-      padding: 2rem 1rem 3rem;
-      background: #ffffff;
-    }
-    h1 {
-      font-size: 2rem;
-      margin: 0 0 0.5rem;
-    }
-    h2 {
-      font-size: 1.5rem;
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-    h3 {
-      font-size: 1.2rem;
-      margin-top: 1.25rem;
-      margin-bottom: 0.35rem;
-    }
-    p {
-      margin: 0 0 0.75rem;
-    }
-    ul {
-      margin: 0 0 0.75rem;
-      padding-left: 1.2rem;
-    }
-
-    form {
-      border: 1px solid #b1b4b6;
-      padding: 1rem 1.25rem 1.25rem;
+      background: #fff;
+      padding: 1.5rem 2rem 2.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       border-radius: 4px;
-      background: #f8f8f8;
-      margin-bottom: 1.5rem;
     }
     label {
       display: block;
+      margin-bottom: 0.25rem;
       font-weight: 600;
-      margin-bottom: 0.25rem;
     }
-    .hint {
-      display: block;
-      font-size: 0.9rem;
-      color: #505a5f;
-      margin-bottom: 0.25rem;
-    }
-    input[type="text"],
-    input[type="url"],
-    select,
-    textarea {
+    input[type="text"] {
       width: 100%;
       padding: 0.5rem;
-      border-radius: 2px;
+      border-radius: 4px;
       border: 1px solid #b1b4b6;
-      font: inherit;
       margin-bottom: 0.75rem;
     }
-    textarea {
-      resize: vertical;
-    }
-    button[type="submit"] {
-      display: inline-block;
-      padding: 0.6rem 1.2rem;
+    button {
       background: #1d70b8;
       color: #fff;
-      border-radius: 4px;
       border: none;
+      border-radius: 4px;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
       cursor: pointer;
-      font-weight: 600;
     }
-    button[type="submit"]:hover {
-      background: #003078;
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
-
-    #status {
-      margin-top: 0.75rem;
+    .status {
+      margin-top: 1rem;
       font-size: 0.95rem;
-      color: #d4351c;
     }
-
-    /* Loading bar */
-    #assessment-loading {
-      margin-top: 0.75rem;
-    }
-    .loading-wrapper {
+    .score {
+      font-size: 1.2rem;
       margin-top: 0.5rem;
     }
-    .loading-label {
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
+    .tag {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      margin-right: 0.3rem;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      background: #e7f1ff;
+      color: #0b0c0c;
     }
-    .loading-bar {
-      position: relative;
-      width: 100%;
-      max-width: 400px;
-      height: 6px;
-      background: #f3f2f1;
-      overflow: hidden;
-      border-radius: 999px;
+    .section {
+      margin-top: 1.5rem;
+      border-top: 1px solid #d0d3d6;
+      padding-top: 1rem;
     }
-    .loading-bar-fill {
-      position: absolute;
-      left: -40%;
-      top: 0;
-      height: 100%;
-      width: 40%;
-      background: #1d70b8;
-      animation: loading-pulse 1.2s linear infinite;
+    .muted {
+      color: #505a5f;
+      font-size: 0.95rem;
     }
-    @keyframes loading-pulse {
-      0% { left: -40%; }
-      50% { left: 60%; }
-      100% { left: 100%; }
+    .error {
+      color: #d4351c;
+      margin-top: 0.5rem;
     }
-
-    #results pre {
-      white-space: pre-wrap;
-      background: #f8f8f8;
-      padding: 0.75rem;
-      border-radius: 4px;
-      border: 1px solid #d0d0d0;
-      font-size: 0.9rem;
-      overflow-x: auto;
+    ul {
+      padding-left: 1.2rem;
+    }
+    #full-report {
+      margin-top: 1rem;
     }
   </style>
+  <!-- Marked for Markdown → HTML -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-  <main>
-    <h1>Check a website</h1>
-    <p>Enter any public sector URL to get an assessment against the Service Standard, WCAG 2.2, privacy, SEO and sustainability.</p>
+<div class="container">
+  <h1>Service assessment prototype</h1>
 
-    <form>
-      <label for="url">URL to assess</label>
-      <span class="hint">Enter a full URL starting with https:// (for example, https://www.legislation.gov.uk)</span>
-      <input id="url" name="url" type="url" required>
+  <p class="muted">
+    Enter a URL to assess. The tool will run two AI calls: first to get structured
+    scores and issues, then to generate a full narrative report.
+  </p>
 
-      <label for="page-type">Page type</label>
-      <span class="hint">Roughly what kind of page is this?</span>
-      <select id="page-type" name="page_type">
-        <option value="start">Start page</option>
-        <option value="transactional">Transactional journey</option>
-        <option value="guidance">Guidance or information</option>
-        <option value="campaign">Campaign or marketing</option>
-        <option value="other">Other</option>
-      </select>
+  <form id="assess-form">
+    <label for="service-url">Service URL</label>
+    <input id="service-url" name="service-url"
+           type="text"
+           placeholder="https://www.legislation.gov.uk/"
+           required>
+    <button id="run-button" type="submit">Run assessment</button>
+  </form>
 
-      <label for="main-user">Main user</label>
-      <span class="hint">For example, “member of the public applying for a licence” or “caseworker processing claims”.</span>
-      <input id="main-user" name="main_user" type="text">
+  <div id="status" class="status"></div>
+  <div id="error" class="error" style="display:none;"></div>
 
-      <label for="user-need">User need</label>
-      <span class="hint">Describe what the user is trying to achieve in one sentence.</span>
-      <textarea id="user-need" name="user_need" rows="2"></textarea>
+  <div id="results" style="display:none;">
+    <h2>Assessment results</h2>
+    <div id="score" class="score"></div>
+    <div id="summary"></div>
 
-      <label for="desired-outcome">Desired outcome for the team</label>
-      <span class="hint">What are you hoping to learn or improve from this assessment?</span>
-      <textarea id="desired-outcome" name="desired_outcome" rows="2"></textarea>
+    <div id="top-issues" class="section"></div>
 
-      <button type="submit">Run assessment</button>
-    </form>
+    <div id="service-standard" class="section"></div>
 
-    <p id="status"></p>
-    <div id="assessment-loading" style="display:none;"></div>
+    <div id="wcag" class="section"></div>
 
-    <section id="results"></section>
-  </main>
+    <div id="perf-seo" class="section"></div>
 
-  <script>
-    const form = document.querySelector('form');
-    const resultsEl = document.getElementById('results');
-    const statusEl = document.getElementById('status');
-    const loadingBarEl = document.getElementById('assessment-loading');
+    <div id="security" class="section"></div>
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    <div id="environment" class="section"></div>
+
+    <div id="full-report-section" class="section">
+      <h2>Full AI assessment report</h2>
+      <div id="full-report" class="muted">Narrative report will appear here after a moment…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // TODO: replace these with your real proxy URLs or direct n8n webhooks
+  const ASSESS_URL = 'http://localhost:5678/webhook-test/siteaudit-assess';
+  const NARRATIVE_URL = 'http://localhost:5678/webhook-test/571803f6-bdbe-4092-86cf-c7cdcf5a2258';
+
+  const form = document.getElementById('assess-form');
+  const runButton = document.getElementById('run-button');
+  const statusEl = document.getElementById('status');
+  const errorEl = document.getElementById('error');
+  const resultsEl = document.getElementById('results');
+
+  const scoreEl = document.getElementById('score');
+  const summaryEl = document.getElementById('summary');
+  const topIssuesEl = document.getElementById('top-issues');
+  const serviceStandardEl = document.getElementById('service-standard');
+  const wcagEl = document.getElementById('wcag');
+  const perfSeoEl = document.getElementById('perf-seo');
+  const securityEl = document.getElementById('security');
+  const envEl = document.getElementById('environment');
+  const fullReportSectionEl = document.getElementById('full-report-section');
+  const fullReportEl = document.getElementById('full-report');
+
+  function setLoading(isLoading, message) {
+    runButton.disabled = isLoading;
+    statusEl.textContent = message || (isLoading ? 'Running assessment…' : '');
+  }
+
+  function showError(msg) {
+    errorEl.style.display = 'block';
+    errorEl.textContent = msg;
+  }
+
+  function clearError() {
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+  }
+
+  function renderServiceStandard(ss = {}) {
+    const points = Object.entries(ss);
+    if (!points.length) {
+      serviceStandardEl.innerHTML = '<h3>UK Government Service Standard</h3><p class="muted">No detailed breakdown returned.</p>';
+      return;
     }
 
-    function showLoading() {
-      if (!loadingBarEl) return;
-      loadingBarEl.innerHTML = `
-        <div class="loading-wrapper">
-          <div class="loading-label">Running assessment… this can take up to 30 seconds.</div>
-          <div class="loading-bar">
-            <div class="loading-bar-fill"></div>
-          </div>
-        </div>
-      `;
-      loadingBarEl.style.display = 'block';
-    }
-
-    function hideLoading() {
-      if (!loadingBarEl) return;
-      loadingBarEl.style.display = 'none';
-      loadingBarEl.innerHTML = '';
-    }
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const url = document.getElementById('url').value.trim();
-      const pageType = document.getElementById('page-type').value;
-      const mainUser = document.getElementById('main-user').value.trim();
-      const userNeed = document.getElementById('user-need').value.trim();
-      const desiredOutcome = document.getElementById('desired-outcome').value.trim();
-
-      resultsEl.innerHTML = '';
-      statusEl.textContent = '';
-      showLoading();
-
-      try {
-        const response = await fetch('http://localhost:5678/webhook-test/siteaudit-assess', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url,
-            page_type: pageType,
-            main_user: mainUser,
-            user_need: userNeed,
-            desired_outcome: desiredOutcome,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Assessment API returned ' + response.status);
-        }
-
-        const data = await response.json();
-        hideLoading();
-        renderResults(data);
-      } catch (error) {
-        hideLoading();
-        console.error(error);
-        statusEl.textContent = 'Sorry, something went wrong running the assessment.';
+    let html = '<h3>UK Government Service Standard</h3>';
+    for (const [key, value] of points) {
+      if (!value || typeof value !== 'object') continue;
+      html += `<h4>${key.replace(/_/g, ' ')}</h4>`;
+      if (value.rating) {
+        html += `<p><span class="tag">Rating: ${value.rating}</span></p>`;
       }
-    });
-
-    function renderResults(data) {
-      if (!data || (typeof data.overall_score === 'undefined' && !data.summary)) {
-        resultsEl.innerHTML = '<p>No results to display.</p>';
-        return;
+      if (typeof value.score === 'number') {
+        html += `<p class="muted">Score: ${value.score}/100</p>`;
       }
-
-      let html = '';
-
-      html += '<h2>Assessment results</h2>';
-
-      if (typeof data.overall_score === 'number') {
-        html += `<p><strong>Overall score:</strong> ${data.overall_score}/100</p>`;
-      }
-
-      if (data.summary) {
-        html += `<p><strong>Summary:</strong> ${escapeHtml(data.summary)}</p>`;
-      }
-
-      if (Array.isArray(data.top_5_issues) && data.top_5_issues.length) {
-        html += '<h3>Top 5 issues to address</h3><ul>';
-        for (const issue of data.top_5_issues) {
-          html += `<li>${escapeHtml(issue)}</li>`;
+      if (Array.isArray(value.comments) && value.comments.length) {
+        html += '<p><strong>Comments:</strong></p><ul>';
+        for (const c of value.comments) {
+          html += `<li>${c}</li>`;
         }
         html += '</ul>';
       }
-
-      if (data.service_standard) {
-        html += '<h3>UK Government Service Standard</h3>';
-        Object.entries(data.service_standard).forEach(([key, value]) => {
-          if (!value) return;
-          html += `<h4>${escapeHtml(key.replace(/_/g, ' '))}</h4>`;
-          if (value.rating) {
-            html += `<p><strong>Rating:</strong> ${escapeHtml(String(value.rating))}</p>`;
-          }
-          if (typeof value.score === 'number') {
-            html += `<p><strong>Score:</strong> ${value.score}/5</p>`;
-          }
-          if (Array.isArray(value.comments) && value.comments.length) {
-            html += '<p><strong>Comments:</strong></p><ul>';
-            value.comments.forEach(c => { html += `<li>${escapeHtml(c)}</li>`; });
-            html += '</ul>';
-          }
-          if (Array.isArray(value.actions) && value.actions.length) {
-            html += '<p><strong>Actions:</strong></p><ul>';
-            value.actions.forEach(a => { html += `<li>${escapeHtml(a)}</li>`; });
-            html += '</ul>';
-          }
-        });
+      if (Array.isArray(value.actions) && value.actions.length) {
+        html += '<p><strong>Actions:</strong></p><ul>';
+        for (const a of value.actions) {
+          html += `<li>${a}</li>`;
+        }
+        html += '</ul>';
       }
-
-      if (data.wcag) {
-        html += '<h3>WCAG 2.2 accessibility</h3>';
-        if (data.wcag.status) {
-          html += `<p><strong>Status:</strong> ${escapeHtml(String(data.wcag.status))}</p>`;
-        }
-        if (Array.isArray(data.wcag.issues) && data.wcag.issues.length) {
-          html += '<ul>';
-          data.wcag.issues.forEach(i => { html += `<li>${escapeHtml(i)}</li>`; });
-          html += '</ul>';
-        }
-      }
-
-      if (data.performance_seo) {
-        html += '<h3>Performance and SEO</h3>';
-        if (typeof data.performance_seo.score === 'number') {
-          html += `<p><strong>Score:</strong> ${data.performance_seo.score}/10</p>`;
-        }
-        if (Array.isArray(data.performance_seo.comments) && data.performance_seo.comments.length) {
-          html += '<ul>';
-          data.performance_seo.comments.forEach(c => { html += `<li>${escapeHtml(c)}</li>`; });
-          html += '</ul>';
-        }
-      }
-
-      if (data.security_privacy) {
-        html += '<h3>Privacy and security</h3>';
-        if (typeof data.security_privacy.score === 'number') {
-          html += `<p><strong>Score:</strong> ${data.security_privacy.score}/10</p>`;
-        }
-        if (Array.isArray(data.security_privacy.comments) && data.security_privacy.comments.length) {
-          html += '<ul>';
-          data.security_privacy.comments.forEach(c => { html += `<li>${escapeHtml(c)}</li>`; });
-          html += '</ul>';
-        }
-      }
-
-      if (data.environment) {
-        html += '<h3>Environmental sustainability</h3>';
-        if (typeof data.environment.score === 'number') {
-          html += `<p><strong>Score:</strong> ${data.environment.score}/10</p>`;
-        }
-        if (Array.isArray(data.environment.comments) && data.environment.comments.length) {
-          html += '<ul>';
-          data.environment.comments.forEach(c => { html += `<li>${escapeHtml(c)}</li>`; });
-          html += '</ul>';
-        }
-      }
-
-      if (data.full_report) {
-        html += '<h3>Full AI assessment report</h3>';
-        html += '<pre>' + escapeHtml(data.full_report) + '</pre>';
-      }
-
-      resultsEl.innerHTML = html;
     }
-  </script>
+    serviceStandardEl.innerHTML = html;
+  }
+
+  function renderResults(data) {
+    resultsEl.style.display = 'block';
+
+    const score = typeof data.overall_score === 'number' ? data.overall_score : 0;
+    scoreEl.textContent = `Overall score: ${score}/100`;
+    summaryEl.textContent = data.summary || 'No summary provided.';
+
+    // Top 5 issues
+    if (Array.isArray(data.top_5_issues) && data.top_5_issues.length) {
+      let html = '<h3>Top 5 issues to address</h3><ul>';
+      for (const issue of data.top_5_issues) {
+        html += `<li>${issue}</li>`;
+      }
+      html += '</ul>';
+      topIssuesEl.innerHTML = html;
+    } else {
+      topIssuesEl.innerHTML = '<h3>Top 5 issues to address</h3><p class="muted">No issues returned.</p>';
+    }
+
+    // Service Standard
+    renderServiceStandard(data.service_standard || {});
+
+    // WCAG
+    if (data.wcag) {
+      let html = '<h3>WCAG 2.2 accessibility</h3>';
+      if (data.wcag.status) {
+        html += `<p><span class="tag">Status: ${data.wcag.status}</span></p>`;
+      }
+      if (Array.isArray(data.wcag.issues) && data.wcag.issues.length) {
+        html += '<ul>';
+        for (const i of data.wcag.issues) html += `<li>${i}</li>`;
+        html += '</ul>';
+      }
+      wcagEl.innerHTML = html;
+    } else {
+      wcagEl.innerHTML = '<h3>WCAG 2.2 accessibility</h3><p class="muted">No data returned.</p>';
+    }
+
+    // Performance & SEO
+    if (data.performance_seo) {
+      let html = '<h3>Performance and SEO</h3>';
+      if (typeof data.performance_seo.score === 'number') {
+        html += `<p class="muted">Score: ${data.performance_seo.score}/100</p>`;
+      }
+      if (Array.isArray(data.performance_seo.comments) && data.performance_seo.comments.length) {
+        html += '<ul>';
+        for (const c of data.performance_seo.comments) html += `<li>${c}</li>`;
+        html += '</ul>';
+      }
+      perfSeoEl.innerHTML = html;
+    } else {
+      perfSeoEl.innerHTML = '<h3>Performance and SEO</h3><p class="muted">No data returned.</p>';
+    }
+
+    // Security & privacy
+    if (data.security_privacy) {
+      let html = '<h3>Privacy and security</h3>';
+      if (typeof data.security_privacy.score === 'number') {
+        html += `<p class="muted">Score: ${data.security_privacy.score}/100</p>`;
+      }
+      if (Array.isArray(data.security_privacy.comments) && data.security_privacy.comments.length) {
+        html += '<ul>';
+        for (const c of data.security_privacy.comments) html += `<li>${c}</li>`;
+        html += '</ul>';
+      }
+      securityEl.innerHTML = html;
+    } else {
+      securityEl.innerHTML = '<h3>Privacy and security</h3><p class="muted">No data returned.</p>';
+    }
+
+    // Environment
+    if (data.environment) {
+      let html = '<h3>Environmental sustainability</h3>';
+      if (typeof data.environment.score === 'number') {
+        html += `<p class="muted">Score: ${data.environment.score}/100</p>`;
+      }
+      if (Array.isArray(data.environment.comments) && data.environment.comments.length) {
+        html += '<ul>';
+        for (const c of data.environment.comments) html += `<li>${c}</li>`;
+        html += '</ul>';
+      }
+      envEl.innerHTML = html;
+    } else {
+      envEl.innerHTML = '<h3>Environmental sustainability</h3><p class="muted">No data returned.</p>';
+    }
+
+    // Reset full report area
+    fullReportSectionEl.style.display = 'block';
+    fullReportEl.textContent = 'Generating detailed report…';
+  }
+
+  async function runAssessment(event) {
+    event.preventDefault();
+    clearError();
+    resultsEl.style.display = 'none';
+    fullReportSectionEl.style.display = 'none';
+
+    const urlInput = document.getElementById('service-url').value.trim();
+    if (!urlInput) {
+      showError('Please enter a URL.');
+      return;
+    }
+
+    try {
+      setLoading(true, 'Running assessment (step 1 of 2)…');
+
+      // 1. Assessment call
+      const assessRes = await fetch(ASSESS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlInput })
+      });
+
+      if (!assessRes.ok) {
+        throw new Error('Assessment request failed with status ' + assessRes.status);
+      }
+
+      let assessment = await assessRes.json();
+      if (Array.isArray(assessment)) assessment = assessment[0] || {};
+
+      if (typeof assessment.overall_score !== 'number') {
+        showError('No results to display from assessment.');
+        setLoading(false, '');
+        return;
+      }
+
+      renderResults(assessment);
+      setLoading(true, 'Generating detailed narrative (step 2 of 2)…');
+
+      // 2. Narrative call
+      const narrRes = await fetch(NARRATIVE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assessment)
+      });
+
+      if (!narrRes.ok) {
+        throw new Error('Narrative request failed with status ' + narrRes.status);
+      }
+
+      let narrative = await narrRes.json();
+      if (Array.isArray(narrative)) narrative = narrative[0] || {};
+      const fullReport = narrative.full_report || '';
+
+      if (fullReport) {
+        fullReportEl.innerHTML = marked.parse(fullReport);
+      } else {
+        fullReportEl.textContent = 'No narrative report was returned.';
+      }
+
+      setLoading(false, 'Assessment complete.');
+    } catch (err) {
+      console.error(err);
+      showError('Something went wrong while running the assessment.');
+      setLoading(false, '');
+    }
+  }
+
+  form.addEventListener('submit', runAssessment);
+</script>
 </body>
 </html>
