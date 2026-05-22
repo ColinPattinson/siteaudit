@@ -285,47 +285,52 @@
     fullReportEl.textContent = 'Generating detailed report…';
   }
 
-  async function runAssessment(event) {
-    event.preventDefault();
-    clearError();
-    resultsEl.style.display = 'none';
-    fullReportSectionEl.style.display = 'none';
+async function runAssessment(event) {
+  event.preventDefault();
+  clearError();
+  resultsEl.style.display = 'none';
+  fullReportSectionEl.style.display = 'none';
 
-    const urlInput = document.getElementById('service-url').value.trim();
-    if (!urlInput) {
-      showError('Please enter a URL.');
+  const urlInput = document.getElementById('service-url').value.trim();
+  if (!urlInput) {
+    showError('Please enter a URL.');
+    return;
+  }
+
+  try {
+    setLoading(true, 'Running assessment (step 1 of 2)…');
+
+    // 1. Assessment call (POST)
+    const assessRes = await fetch(ASSESS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: urlInput })
+    });
+
+    if (!assessRes.ok) {
+      showError('Assessment request failed with status ' + assessRes.status);
+      setLoading(false, '');
       return;
     }
 
+    let assessment = await assessRes.json();
+    if (Array.isArray(assessment)) assessment = assessment[0] || {};
+
+    if (typeof assessment.overall_score !== 'number') {
+      showError('No results to display from assessment.');
+      setLoading(false, '');
+      return;
+    }
+
+    // Render structured results
+    renderResults(assessment);
+
+    // --- start of narrative step ---
+    setLoading(true, 'Generating detailed narrative (step 2 of 2)…');
+
+    let fullReport = '';
+
     try {
-      setLoading(true, 'Running assessment (step 1 of 2)…');
-
-      // 1. Assessment call (POST)
-      const assessRes = await fetch(ASSESS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlInput })
-      });
-
-      if (!assessRes.ok) {
-        showError('Assessment request failed with status ' + assessRes.status);
-        setLoading(false, '');
-        return;
-      }
-
-      let assessment = await assessRes.json();
-      if (Array.isArray(assessment)) assessment = assessment[0] || {};
-
-      if (typeof assessment.overall_score !== 'number') {
-        showError('No results to display from assessment.');
-        setLoading(false, '');
-        return;
-      }
-
-      renderResults(assessment);
-      setLoading(true, 'Generating detailed narrative (step 2 of 2)…');
-
-      // 2. Narrative call (POST) – this is the only place NARRATIVE_URL is used
       console.log('Calling narrative with POST', NARRATIVE_URL);
       const narrRes = await fetch(NARRATIVE_URL, {
         method: 'POST',
@@ -333,40 +338,54 @@
         body: JSON.stringify(assessment)
       });
 
-      let fullReport = '';
       if (narrRes.ok) {
-        let narrative;
+        let rawText = await narrRes.text();
+        console.log('Narrative raw response:', rawText);
+
         try {
-          narrative = await narrRes.json();
+          // Try to parse JSON; if it fails, treat raw text as markdown
+          if (rawText.trim().startsWith('{') || rawText.trim().startsWith('[')) {
+            let narrative = JSON.parse(rawText);
+            if (Array.isArray(narrative)) narrative = narrative[0] || {};
+            if (narrative && typeof narrative.full_report === 'string') {
+              fullReport = narrative.full_report;
+            }
+          } else {
+            // Backend might have returned plain markdown instead of JSON
+            fullReport = rawText;
+          }
         } catch (e) {
           console.error('Failed to parse narrative JSON', e);
-          narrative = null;
-        }
-        if (Array.isArray(narrative)) narrative = narrative[0] || {};
-        if (narrative && typeof narrative.full_report === 'string') {
-          fullReport = narrative.full_report;
+          // Fall back to showing raw text if any
+          fullReport = rawText || '';
         }
       } else {
         console.error('Narrative request failed with status', narrRes.status);
       }
-
-      if (fullReport) {
-        if (window.marked && typeof marked.parse === 'function') {
-          fullReportEl.innerHTML = marked.parse(fullReport);
-        } else {
-          fullReportEl.textContent = fullReport;
-        }
-      } else {
-        fullReportEl.textContent = 'No narrative report was returned.';
-      }
-
-      setLoading(false, 'Assessment complete.');
-    } catch (err) {
-      console.error(err);
-      showError('Something went wrong while running the assessment.');
-      setLoading(false, '');
+    } catch (errNarrative) {
+      console.error('Narrative fetch error', errNarrative);
     }
+
+    // Show whatever we have without breaking the assessment
+    if (fullReport) {
+      if (window.marked && typeof marked.parse === 'function') {
+        fullReportEl.innerHTML = marked.parse(fullReport);
+      } else {
+        fullReportEl.textContent = fullReport;
+      }
+    } else {
+      fullReportEl.textContent = 'No narrative report was returned.';
+    }
+
+    setLoading(false, 'Assessment complete.');
+    // --- end of narrative step ---
+
+  } catch (err) {
+    console.error(err);
+    showError('Something went wrong while running the assessment.');
+    setLoading(false, '');
   }
+}
 
   form.addEventListener('submit', runAssessment);
 </script>
