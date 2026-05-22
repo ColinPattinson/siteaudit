@@ -1,404 +1,358 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Service Assessment</title>
+  <meta charset="utf-8">
+  <title>Service assessment prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Simple styling just so it is readable -->
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
-      padding: 1.5rem;
-      background: #f3f2f1;
-      color: #0b0c0c;
+      padding: 2rem;
+      background: #f5f5f5;
+      color: #111;
     }
-    h1, h2, h3 {
-      font-weight: 600;
-      margin-top: 1.5rem;
-    }
+
     .container {
-      max-width: 960px;
+      max-width: 900px;
       margin: 0 auto;
       background: #fff;
-      padding: 1.5rem 2rem 2.5rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      border-radius: 4px;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.8rem;
+    }
+
+    p.muted {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    form {
+      margin: 1.5rem 0;
+    }
+
     label {
       display: block;
-      margin-bottom: 0.25rem;
       font-weight: 600;
+      margin-bottom: 0.5rem;
     }
-    input[type="text"] {
+
+    input[type="url"] {
       width: 100%;
-      padding: 0.5rem;
+      padding: 0.6rem 0.7rem;
       border-radius: 4px;
-      border: 1px solid #b1b4b6;
-      margin-bottom: 0.75rem;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      box-sizing: border-box;
     }
+
     button {
+      margin-top: 0.8rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      border: none;
       background: #1d70b8;
       color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 0.6rem 1.2rem;
       font-size: 1rem;
       cursor: pointer;
     }
-    button[disabled] {
+
+    button:disabled {
       opacity: 0.6;
-      cursor: not-allowed;
+      cursor: default;
     }
-    .status {
-      margin-top: 1rem;
+
+    #status {
+      margin-left: 0.75rem;
       font-size: 0.95rem;
+      color: #555;
     }
-    .score {
+
+    #error {
+      margin-top: 1rem;
+      color: #d4351c;
+      display: none;
+    }
+
+    #results {
+      margin-top: 2rem;
+      display: none;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.2rem;
+      background: #fafafa;
+    }
+
+    .card h2 {
+      margin-top: 0;
       font-size: 1.2rem;
-      margin-top: 0.5rem;
     }
+
+    .card h3 {
+      margin-top: 0.5rem;
+      font-size: 1.05rem;
+    }
+
     .tag {
       display: inline-block;
-      padding: 0.1rem 0.4rem;
-      margin-right: 0.3rem;
-      border-radius: 3px;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: #eef2f7;
       font-size: 0.85rem;
-      background: #e7f1ff;
-      color: #0b0c0c;
     }
-    .section {
-      margin-top: 1.5rem;
-      border-top: 1px solid #d0d3d6;
-      padding-top: 1rem;
-    }
-    .muted {
-      color: #505a5f;
-      font-size: 0.95rem;
-    }
-    .error {
-      color: #d4351c;
-      margin-top: 0.5rem;
-    }
+
     ul {
       padding-left: 1.2rem;
     }
-    #full-report {
-      margin-top: 1rem;
-    }
   </style>
-  <!-- Marked for Markdown → HTML -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-<div class="container">
-  <h1>Service assessment prototype</h1>
+  <main class="container">
+    <h1>Service assessment prototype</h1>
+    <p class="muted">
+      Enter a URL to assess. The tool will run an AI assessment to get structured scores and issues.
+    </p>
 
-  <p class="muted">
-    Enter a URL to assess. The tool will run two AI calls: first to get structured
-    scores and issues, then to generate a full narrative report.
-  </p>
+    <form id="assess-form">
+      <label for="service-url">Service URL</label>
+      <input id="service-url" name="service-url" type="url" required
+             placeholder="https://www.legislation.gov.uk/">
+      <button id="run-button" type="submit">Run assessment</button>
+      <span id="status"></span>
+    </form>
 
-  <form id="assess-form">
-    <label for="service-url">Service URL</label>
-    <input id="service-url" name="service-url"
-           type="text"
-           placeholder="https://www.legislation.gov.uk/"
-           required>
-    <button id="run-button" type="submit">Run assessment</button>
-  </form>
+    <div id="error"></div>
 
-  <div id="status" class="status"></div>
-  <div id="error" class="error" style="display:none;"></div>
+    <section id="results">
+      <div class="card">
+        <h2 id="score">Overall score</h2>
+        <p id="summary" class="muted"></p>
+      </div>
 
-  <div id="results" style="display:none;">
-    <h2>Assessment results</h2>
-    <div id="score" class="score"></div>
-    <div id="summary"></div>
+      <div id="top-issues" class="card"></div>
 
-    <div id="top-issues" class="section"></div>
+      <div id="service-standard" class="card"></div>
 
-    <div id="service-standard" class="section"></div>
+      <div id="wcag" class="card"></div>
 
-    <div id="wcag" class="section"></div>
+      <div id="perf-seo" class="card"></div>
 
-    <div id="perf-seo" class="section"></div>
+      <div id="security" class="card"></div>
 
-    <div id="security" class="section"></div>
+      <div id="environment" class="card"></div>
+    </section>
+  </main>
 
-    <div id="environment" class="section"></div>
+  <script>
+    // Assessment webhook only
+    const ASSESS_URL = 'http://localhost:5678/webhook/siteaudit-assess';
 
-    <div id="full-report-section" class="section">
-      <h2>Full AI assessment report</h2>
-      <div id="full-report" class="muted">Narrative report will appear here after a moment…</div>
-    </div>
-  </div>
-</div>
+    const form = document.getElementById('assess-form');
+    const runButton = document.getElementById('run-button');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const resultsEl = document.getElementById('results');
 
-<script>
-  // Your two n8n production webhooks
-  const ASSESS_URL = 'http://localhost:5678/webhook/siteaudit-assess';
-  const NARRATIVE_URL = 'http://localhost:5678/webhook/571803f6-bdbe-4092-86cf-c7cdcf5a2258';
+    const scoreEl = document.getElementById('score');
+    const summaryEl = document.getElementById('summary');
+    const topIssuesEl = document.getElementById('top-issues');
+    const serviceStandardEl = document.getElementById('service-standard');
+    const wcagEl = document.getElementById('wcag');
+    const perfSeoEl = document.getElementById('perf-seo');
+    const securityEl = document.getElementById('security');
+    const envEl = document.getElementById('environment');
 
-  const form = document.getElementById('assess-form');
-  const runButton = document.getElementById('run-button');
-  const statusEl = document.getElementById('status');
-  const errorEl = document.getElementById('error');
-  const resultsEl = document.getElementById('results');
-
-  const scoreEl = document.getElementById('score');
-  const summaryEl = document.getElementById('summary');
-  const topIssuesEl = document.getElementById('top-issues');
-  const serviceStandardEl = document.getElementById('service-standard');
-  const wcagEl = document.getElementById('wcag');
-  const perfSeoEl = document.getElementById('perf-seo');
-  const securityEl = document.getElementById('security');
-  const envEl = document.getElementById('environment');
-  const fullReportSectionEl = document.getElementById('full-report-section');
-  const fullReportEl = document.getElementById('full-report');
-
-  function setLoading(isLoading, message) {
-    runButton.disabled = isLoading;
-    statusEl.textContent = message || (isLoading ? 'Running assessment…' : '');
-  }
-
-  function showError(msg) {
-    errorEl.style.display = 'block';
-    errorEl.textContent = msg;
-  }
-
-  function clearError() {
-    errorEl.style.display = 'none';
-    errorEl.textContent = '';
-  }
-
-  function renderServiceStandard(ss = {}) {
-    const points = Object.entries(ss);
-    if (!points.length) {
-      serviceStandardEl.innerHTML = '<h3>UK Government Service Standard</h3><p class="muted">No detailed breakdown returned.</p>';
-      return;
+    function setLoading(isLoading, message) {
+      runButton.disabled = isLoading;
+      statusEl.textContent = message || (isLoading ? 'Running assessment…' : '');
     }
 
-    let html = '<h3>UK Government Service Standard</h3>';
-    for (const [key, value] of points) {
-      if (!value || typeof value !== 'object') continue;
-      html += `<h4>${key.replace(/_/g, ' ')}</h4>`;
-      if (value.rating) {
-        html += `<p><span class="tag">Rating: ${value.rating}</span></p>`;
-      }
-      if (typeof value.score === 'number') {
-        html += `<p class="muted">Score: ${value.score}/100</p>`;
-      }
-      if (Array.isArray(value.comments) && value.comments.length) {
-        html += '<p><strong>Comments:</strong></p><ul>';
-        for (const c of value.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      if (Array.isArray(value.actions) && value.actions.length) {
-        html += '<p><strong>Actions:</strong></p><ul>';
-        for (const a of value.actions) html += `<li>${a}</li>`;
-        html += '</ul>';
-      }
-    }
-    serviceStandardEl.innerHTML = html;
-  }
-
-  function renderResults(data) {
-    resultsEl.style.display = 'block';
-
-    const score = typeof data.overall_score === 'number' ? data.overall_score : 0;
-    scoreEl.textContent = `Overall score: ${score}/100`;
-    summaryEl.textContent = data.summary || 'No summary provided.';
-
-    if (Array.isArray(data.top_5_issues) && data.top_5_issues.length) {
-      let html = '<h3>Top 5 issues to address</h3><ul>';
-      for (const issue of data.top_5_issues) html += `<li>${issue}</li>`;
-      html += '</ul>';
-      topIssuesEl.innerHTML = html;
-    } else {
-      topIssuesEl.innerHTML = '<h3>Top 5 issues to address</h3><p class="muted">No issues returned.</p>';
+    function showError(msg) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = msg;
     }
 
-    renderServiceStandard(data.service_standard || {});
-
-    if (data.wcag) {
-      let html = '<h3>WCAG 2.2 accessibility</h3>';
-      if (data.wcag.status) {
-        html += `<p><span class="tag">Status: ${data.wcag.status}</span></p>`;
-      }
-      if (Array.isArray(data.wcag.issues) && data.wcag.issues.length) {
-        html += '<ul>';
-        for (const i of data.wcag.issues) html += `<li>${i}</li>`;
-        html += '</ul>';
-      }
-      wcagEl.innerHTML = html;
-    } else {
-      wcagEl.innerHTML = '<h3>WCAG 2.2 accessibility</h3><p class="muted">No data returned.</p>';
+    function clearError() {
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
     }
 
-    if (data.performance_seo) {
-      let html = '<h3>Performance and SEO</h3>';
-      if (typeof data.performance_seo.score === 'number') {
-        html += `<p class="muted">Score: ${data.performance_seo.score}/100</p>`;
+    function renderServiceStandard(ss = {}) {
+      const points = Object.entries(ss);
+      if (!points.length) {
+        serviceStandardEl.innerHTML =
+          '<h3>UK Government Service Standard</h3>' +
+          '<p class="muted">No detailed breakdown returned.</p>';
+        return;
       }
-      if (Array.isArray(data.performance_seo.comments) && data.performance_seo.comments.length) {
-        html += '<ul>';
-        for (const c of data.performance_seo.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      perfSeoEl.innerHTML = html;
-    } else {
-      perfSeoEl.innerHTML = '<h3>Performance and SEO</h3><p class="muted">No data returned.</p>';
-    }
 
-    if (data.security_privacy) {
-      let html = '<h3>Privacy and security</h3>';
-      if (typeof data.security_privacy.score === 'number') {
-        html += `<p class="muted">Score: ${data.security_privacy.score}/100</p>`;
-      }
-      if (Array.isArray(data.security_privacy.comments) && data.security_privacy.comments.length) {
-        html += '<ul>';
-        for (const c of data.security_privacy.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      securityEl.innerHTML = html;
-    } else {
-      securityEl.innerHTML = '<h3>Privacy and security</h3><p class="muted">No data returned.</p>';
-    }
-
-    if (data.environment) {
-      let html = '<h3>Environmental sustainability</h3>';
-      if (typeof data.environment.score === 'number') {
-        html += `<p class="muted">Score: ${data.environment.score}/100</p>`;
-      }
-      if (Array.isArray(data.environment.comments) && data.environment.comments.length) {
-        html += '<ul>';
-        for (const c of data.environment.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      envEl.innerHTML = html;
-    } else {
-      envEl.innerHTML = '<h3>Environmental sustainability</h3><p class="muted">No data returned.</p>';
-    }
-
-    fullReportSectionEl.style.display = 'block';
-    fullReportEl.textContent = 'Generating detailed report…';
-  }
-
-async function runAssessment(event) {
-  event.preventDefault();
-  clearError();
-  resultsEl.style.display = 'none';
-  fullReportSectionEl.style.display = 'none';
-
-  const urlInput = document.getElementById('service-url').value.trim();
-  if (!urlInput) {
-    showError('Please enter a URL.');
-    return;
-  }
-
-  try {
-    setLoading(true, 'Running assessment (step 1 of 2)…');
-
-    // 1. Assessment call (POST)
-    const assessRes = await fetch(ASSESS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: urlInput })
-    });
-
-    if (!assessRes.ok) {
-      showError('Assessment request failed with status ' + assessRes.status);
-      setLoading(false, '');
-      return;
-    }
-
-    console.log('Assess status', assessRes.status);
-
-    const rawAssessText = await assessRes.text();
-    console.log('Assess raw body', rawAssessText);
-
-    let assessment = {};
-    try {
-      assessment = JSON.parse(rawAssessText || '{}');
-    } catch (e) {
-      console.error('Failed to parse assessment JSON', e);
-      showError('Assessment returned invalid JSON.');
-      setLoading(false, '');
-      return;
-    }
-    if (Array.isArray(assessment)) assessment = assessment[0] || {};
-
-    if (typeof assessment.overall_score !== 'number') {
-      showError('No results to display from assessment.');
-      setLoading(false, '');
-      return;
-    }
-
-    // Render structured results
-    renderResults(assessment);
-
-    // --- start of narrative step ---
-    setLoading(true, 'Generating detailed narrative (step 2 of 2)…');
-
-    let fullReport = '';
-
-    try {
-      console.log('Calling narrative with POST', NARRATIVE_URL);
-      const narrRes = await fetch(NARRATIVE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assessment)
-      });
-
-      if (narrRes.ok) {
-        let rawText = await narrRes.text();
-        console.log('Narrative raw response:', rawText);
-
-        try {
-          // Try to parse JSON; if it fails, treat raw text as markdown
-          if (rawText.trim().startsWith('{') || rawText.trim().startsWith('[')) {
-            let narrative = JSON.parse(rawText);
-            if (Array.isArray(narrative)) narrative = narrative[0] || {};
-            if (narrative && typeof narrative.full_report === 'string') {
-              fullReport = narrative.full_report;
-            }
-          } else {
-            // Backend might have returned plain markdown instead of JSON
-            fullReport = rawText;
-          }
-        } catch (e) {
-          console.error('Failed to parse narrative JSON', e);
-          // Fall back to showing raw text if any
-          fullReport = rawText || '';
+      let html = '<h3>UK Government Service Standard</h3>';
+      for (const [key, value] of points) {
+        if (!value || typeof value !== 'object') continue;
+        html += `<h4>${key.replace(/_/g, ' ')}</h4>`;
+        if (value.rating) {
+          html += `<p><span class="tag">Rating: ${value.rating}</span></p>`;
         }
-      } else {
-        console.error('Narrative request failed with status', narrRes.status);
+        if (typeof value.score === 'number') {
+          html += `<p class="muted">Score: ${value.score}/100</p>`;
+        }
+        if (Array.isArray(value.comments) && value.comments.length) {
+          html += '<p><strong>Comments:</strong></p><ul>';
+          for (const c of value.comments) html += `<li>${c}</li>`;
+          html += '</ul>';
+        }
+        if (Array.isArray(value.actions) && value.actions.length) {
+          html += '<p><strong>Actions:</strong></p><ul>';
+          for (const a of value.actions) html += `<li>${a}</li>`;
+          html += '</ul>';
+        }
       }
-    } catch (errNarrative) {
-      console.error('Narrative fetch error', errNarrative);
+      serviceStandardEl.innerHTML = html;
     }
 
-    // Show whatever we have without breaking the assessment
-    if (fullReport) {
-      if (window.marked && typeof marked.parse === 'function') {
-        fullReportEl.innerHTML = marked.parse(fullReport);
+    function renderResults(data) {
+      resultsEl.style.display = 'block';
+
+      const score = typeof data.overall_score === 'number' ? data.overall_score : 0;
+      scoreEl.textContent = `Overall score: ${score}/100`;
+      summaryEl.textContent = data.summary || 'No summary provided.';
+
+      if (Array.isArray(data.top_5_issues) && data.top_5_issues.length) {
+        let html = '<h3>Top 5 issues to address</h3><ul>';
+        for (const issue of data.top_5_issues) html += `<li>${issue}</li>`;
+        html += '</ul>';
+        topIssuesEl.innerHTML = html;
       } else {
-        fullReportEl.textContent = fullReport;
+        topIssuesEl.innerHTML =
+          '<h3>Top 5 issues to address</h3>' +
+          '<p class="muted">No issues returned.</p>';
       }
-    } else {
-      fullReportEl.textContent = 'No narrative report was returned.';
+
+      renderServiceStandard(data.service_standard || {});
+
+      if (data.wcag) {
+        let html = '<h3>WCAG 2.2 accessibility</h3>';
+        if (data.wcag.status) {
+          html += `<p><span class="tag">Status: ${data.wcag.status}</span></p>`;
+        }
+        if (Array.isArray(data.wcag.issues) && data.wcag.issues.length) {
+          html += '<ul>';
+          for (const i of data.wcag.issues) html += `<li>${i}</li>`;
+          html += '</ul>';
+        }
+        wcagEl.innerHTML = html;
+      } else {
+        wcagEl.innerHTML =
+          '<h3>WCAG 2.2 accessibility</h3>' +
+          '<p class="muted">No data returned.</p>';
+      }
+
+      if (data.performance_seo) {
+        let html = '<h3>Performance and SEO</h3>';
+        if (typeof data.performance_seo.score === 'number') {
+          html += `<p class="muted">Score: ${data.performance_seo.score}/100</p>`;
+        }
+        if (Array.isArray(data.performance_seo.comments) && data.performance_seo.comments.length) {
+          html += '<ul>';
+          for (const c of data.performance_seo.comments) html += `<li>${c}</li>`;
+          html += '</ul>';
+        }
+        perfSeoEl.innerHTML = html;
+      } else {
+        perfSeoEl.innerHTML =
+          '<h3>Performance and SEO</h3>' +
+          '<p class="muted">No data returned.</p>';
+      }
+
+      if (data.security_privacy) {
+        let html = '<h3>Privacy and security</h3>';
+        if (typeof data.security_privacy.score === 'number') {
+          html += `<p class="muted">Score: ${data.security_privacy.score}/100</p>`;
+        }
+        if (Array.isArray(data.security_privacy.comments) && data.security_privacy.comments.length) {
+          html += '<ul>';
+          for (const c of data.security_privacy.comments) html += `<li>${c}</li>`;
+          html += '</ul>';
+        }
+        securityEl.innerHTML = html;
+      } else {
+        securityEl.innerHTML =
+          '<h3>Privacy and security</h3>' +
+          '<p class="muted">No data returned.</p>';
+      }
+
+      if (data.environment) {
+        let html = '<h3>Environmental sustainability</h3>';
+        if (typeof data.environment.score === 'number') {
+          html += `<p class="muted">Score: ${data.environment.score}/100</p>`;
+        }
+        if (Array.isArray(data.environment.comments) && data.environment.comments.length) {
+          html += '<ul>';
+          for (const c of data.environment.comments) html += `<li>${c}</li>`;
+          html += '</ul>';
+        }
+        envEl.innerHTML = html;
+      } else {
+        envEl.innerHTML =
+          '<h3>Environmental sustainability</h3>' +
+          '<p class="muted">No data returned.</p>';
+      }
     }
 
-    setLoading(false, 'Assessment complete.');
-    // --- end of narrative step ---
+    async function runAssessment(event) {
+      event.preventDefault();
+      clearError();
+      resultsEl.style.display = 'none';
 
-  } catch (err) {
-    console.error(err);
-    showError('Something went wrong while running the assessment.');
-    setLoading(false, '');
-  }
-}
+      const urlInput = document.getElementById('service-url').value.trim();
+      if (!urlInput) {
+        showError('Please enter a URL.');
+        return;
+      }
 
-  form.addEventListener('submit', runAssessment);
-</script>
+      try {
+        setLoading(true, 'Running assessment…');
+
+        const assessRes = await fetch(ASSESS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlInput })
+        });
+
+        if (!assessRes.ok) {
+          showError('Assessment request failed with status ' + assessRes.status);
+          setLoading(false, '');
+          return;
+        }
+
+        let assessment = await assessRes.json();
+        if (Array.isArray(assessment)) assessment = assessment[0] || {};
+
+        if (typeof assessment.overall_score !== 'number') {
+          showError('No results to display from assessment.');
+          setLoading(false, '');
+          return;
+        }
+
+        renderResults(assessment);
+        setLoading(false, 'Assessment complete.');
+      } catch (err) {
+        console.error(err);
+        showError('Something went wrong while running the assessment.');
+        setLoading(false, '');
+      }
+    }
+
+    form.addEventListener('submit', runAssessment);
+  </script>
+</body>
+</html>
