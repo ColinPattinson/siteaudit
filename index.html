@@ -300,27 +300,24 @@
     try {
       setLoading(true, 'Running assessment…');
 
-const assessRes = await fetch(ASSESS_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ url: urlInput })
-});
+      const assessRes = await fetch(ASSESS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlInput })
+      });
 
-if (!assessRes.ok) {
-  showError('Assessment request failed with status ' + assessRes.status);
-  setLoading(false, '');
-  return;
-}
+      if (!assessRes.ok) {
+        showError('Assessment request failed with status ' + assessRes.status);
+        setLoading(false, '');
+        return;
+      }
 
-console.log('Assess status', assessRes.status);
-const rawText = await assessRes.text();
-console.log('Assess raw body', rawText);
+      console.log('Assess status', assessRes.status);
+      const rawText = await assessRes.text();
+      console.log('Assess raw body', rawText);
 
-let assessmentRaw = rawText ? JSON.parse(rawText) : {};
-let assessment = Array.isArray(assessmentRaw) ? (assessmentRaw[0] || {}) : assessmentRaw;
-
-      const assessmentRaw = await assessRes.json();
-      let assessment = Array.isArray(assessmentRaw) ? (assessmentRaw[0] || {}) : assessmentRaw;
+      const assessmentRaw = rawText ? JSON.parse(rawText) : {};
+      const assessment = Array.isArray(assessmentRaw) ? (assessmentRaw[0] || {}) : assessmentRaw;
 
       if (typeof assessment.overall_score !== 'number') {
         showError('No results to display from assessment.');
