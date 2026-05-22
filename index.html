@@ -313,7 +313,20 @@ async function runAssessment(event) {
       return;
     }
 
-    let assessment = await assessRes.json();
+    console.log('Assess status', assessRes.status);
+
+    const rawAssessText = await assessRes.text();
+    console.log('Assess raw body', rawAssessText);
+
+    let assessment = {};
+    try {
+      assessment = JSON.parse(rawAssessText || '{}');
+    } catch (e) {
+      console.error('Failed to parse assessment JSON', e);
+      showError('Assessment returned invalid JSON.');
+      setLoading(false, '');
+      return;
+    }
     if (Array.isArray(assessment)) assessment = assessment[0] || {};
 
     if (typeof assessment.overall_score !== 'number') {
