@@ -2,136 +2,379 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Service assessment prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <title>Service assessment prototype</title>
   <style>
+    :root {
+      --bg: #f3f2f1;
+      --panel: #ffffff;
+      --text: #0b0c0c;
+      --muted: #505a5f;
+      --border: #d8dce0;
+      --blue: #1d70b8;
+      --blue-dark: #0b4f8a;
+      --green: #00703c;
+      --amber: #b58800;
+      --red: #d4351c;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
-      padding: 1.5rem;
-      background: #f3f2f1;
-      color: #0b0c0c;
+      padding: 24px;
+      background: linear-gradient(180deg, #f6f7f9 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.5;
     }
     .container {
-      max-width: 960px;
+      max-width: 1120px;
       margin: 0 auto;
-      background: #fff;
-      padding: 1.5rem 2rem 2.5rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      border-radius: 4px;
     }
-    h1, h2, h3 {
-      font-weight: 600;
-      margin-top: 1.5rem;
-    }
-    p.muted {
-      color: #505a5f;
-      font-size: 0.95rem;
-    }
-    form {
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.25rem;
-      font-weight: 600;
-    }
-    input[type="url"] {
-      width: 100%;
-      padding: 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #b1b4b6;
-      box-sizing: border-box;
-    }
-    button {
-      background: #1d70b8;
+    .hero {
+      background: linear-gradient(135deg, #0b4f8a 0%, #1d70b8 60%, #2b8cc4 100%);
       color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 0.6rem 1.2rem;
+      padding: 28px 28px 26px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.15; }
+    .hero p { margin: 0; max-width: 70ch; color: rgba(255,255,255,0.92); }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .muted { color: var(--muted); }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      gap: 16px;
+      align-items: start;
+      margin-top: 18px;
+    }
+    @media (max-width: 900px) {
+      .intro-grid { grid-template-columns: 1fr; }
+    }
+    form { margin-top: 10px; }
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+    .field-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+    input[type="url"] {
+      flex: 1 1 420px;
+      min-width: 240px;
+      padding: 14px 16px;
+      border: 2px solid #b1b4b6;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+    input[type="url"]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,112,184,0.2); }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 700;
+      padding: 14px 18px;
+      min-width: 160px;
       font-size: 1rem;
       cursor: pointer;
-      margin-top: 0.75rem;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.08);
     }
-    button[disabled] {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    #status {
-      margin-left: 0.75rem;
-      font-size: 0.95rem;
-      color: #505a5f;
-    }
-    #error {
-      color: #d4351c;
-      margin-top: 0.5rem;
+    button:hover { filter: brightness(1.02); }
+    button:focus { outline: 3px solid rgba(0,112,60,0.25); outline-offset: 2px; }
+    button[disabled] { opacity: 0.7; cursor: not-allowed; }
+    #status { margin-left: 2px; color: var(--muted); font-weight: 600; }
+    .error {
       display: none;
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: #fce8e6;
+      border-left: 5px solid var(--red);
+      color: #942514;
+      border-radius: 10px;
+      font-weight: 600;
     }
-    #results {
-      margin-top: 1.5rem;
-      display: none;
+    #results { display: none; }
+    .results-head {
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr;
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 900px) {
+      .results-head { grid-template-columns: 1fr; }
+    }
+    .score-card {
+      background: linear-gradient(135deg, #0b4f8a 0%, #1d70b8 100%);
+      color: #fff;
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .score-card h2 { margin: 0 0 10px; font-size: 1.35rem; }
+    .overall-score {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .overall-score strong { font-size: 3rem; line-height: 1; }
+    .overall-score span { font-size: 1rem; opacity: 0.95; }
+    .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .badge.green { background: var(--green); }
+    .badge.amber { background: var(--amber); }
+    .badge.red { background: var(--red); }
+    .side-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .side-card h3 { margin: 0 0 10px; }
+    .side-card ul { margin: 10px 0 0; padding-left: 20px; }
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
     }
     .section {
-      margin-top: 1.5rem;
-      border-top: 1px solid #d0d3d6;
-      padding-top: 1rem;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
     }
-    .score {
-      font-size: 1.2rem;
-      margin-top: 0.5rem;
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 1.35rem;
     }
-    .tag {
+    .section h3 { margin: 0 0 10px; font-size: 1.1rem; }
+    .section + .section { margin-top: 0; }
+    .muted-box {
+      background: #f8f9fb;
+      border: 1px solid #e6e8ec;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: var(--text);
+    }
+    .top-issues ul, .bullets ul, ul { padding-left: 20px; margin: 10px 0 0; }
+    .framing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 800px) { .framing-grid { grid-template-columns: 1fr; } }
+    .framing-card {
+      border: 1px solid #e6e8ec;
+      border-radius: 12px;
+      background: #fbfcfd;
+      padding: 16px;
+    }
+    .framing-card h3 { margin-top: 0; }
+    .mini-list { margin: 8px 0 0; padding-left: 18px; }
+    .ss-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    .ss-table th, .ss-table td {
+      border-top: 1px solid #e6e8ec;
+      padding: 14px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    .ss-table thead th {
+      background: #f8f9fb;
+      border-top: 0;
+      font-size: 0.95rem;
+    }
+    .ss-point {
+      font-weight: 800;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .score-pill {
       display: inline-block;
-      padding: 0.1rem 0.4rem;
-      margin-right: 0.3rem;
-      border-radius: 3px;
-      font-size: 0.85rem;
-      background: #e7f1ff;
-      color: #0b0c0c;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef3f8;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.9rem;
+      white-space: nowrap;
     }
-    ul {
-      padding-left: 1.2rem;
+    .score-pill.green { background: rgba(0,112,60,0.12); color: var(--green); }
+    .score-pill.amber { background: rgba(181,136,0,0.14); color: #7a5b00; }
+    .score-pill.red { background: rgba(212,53,28,0.12); color: var(--red); }
+    .section-meta { color: var(--muted); font-weight: 600; margin-top: 4px; }
+    .stack { display: grid; gap: 10px; }
+    .item-card {
+      border: 1px solid #e6e8ec;
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: #fff;
     }
+    .item-card h4 { margin: 0 0 8px; font-size: 1rem; }
+    .item-card p { margin: 0; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+    .subtle-label {
+      display: inline-block;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .footer-note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .empty {
+      color: var(--muted);
+      background: #fbfbfb;
+      border: 1px dashed #d9dde2;
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+    .small { font-size: 0.95rem; }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>Service assessment prototype</h1>
+  <header class="hero">
+    <h1>Service assessment prototype</h1>
+    <p>Enter a URL to assess. The tool will run an AI assessment and present a GOV.UK-style report with a service framing section, RAG ratings, actions, and supporting commentary.</p>
+  </header>
 
-  <p class="muted">
-    Enter a URL to assess. The tool will run an AI assessment to get structured scores and issues.
-  </p>
-
-  <form id="assess-form">
-    <label for="service-url">Service URL</label>
-    <input id="service-url" name="service-url"
-           type="url"
-           placeholder="https://www.legislation.gov.uk/"
-           required>
-    <button id="run-button" type="submit">Run assessment</button>
-    <span id="status"></span>
-  </form>
-
-  <div id="error"></div>
+  <section class="panel" aria-label="Run assessment">
+    <form id="assess-form">
+      <label for="service-url">Service URL</label>
+      <div class="field-row">
+        <input id="service-url" name="service-url" type="url" placeholder="https://www.legislation.gov.uk/" required>
+        <button id="run-button" type="submit">Run assessment</button>
+        <span id="status"></span>
+      </div>
+    </form>
+    <div id="error" class="error" role="alert"></div>
+  </section>
 
   <div id="results">
-    <h2>Assessment results</h2>
-    <div id="score" class="score"></div>
-    <div id="summary" class="muted"></div>
+    <div class="results-head">
+      <section class="score-card" aria-label="Overall assessment result">
+        <h2>Assessment results</h2>
+        <div class="overall-score">
+          <strong id="score">0</strong><span>/100 overall score</span>
+        </div>
+        <div id="overall-rating" class="badge-row"></div>
+        <p id="summary" class="small" style="margin-bottom:0;"></p>
+      </section>
 
-    <div id="top-issues" class="section"></div>
-    <div id="service-standard" class="section"></div>
-    <div id="wcag" class="section"></div>
-    <div id="perf-seo" class="section"></div>
-    <div id="security" class="section"></div>
-    <div id="environment" class="section"></div>
+      <aside class="side-card" aria-label="Top line highlights">
+        <h3>Top line</h3>
+        <div id="service-type" class="subtle-label"></div>
+        <div id="highlights" class="stack"></div>
+      </aside>
+    </div>
+
+    <div class="section-grid">
+      <section id="service-framing" class="section">
+        <h2>Service framing</h2>
+        <div class="framing-grid">
+          <div class="framing-card">
+            <h3>Service Description</h3>
+            <p id="service-description" class="muted-box">No service description returned.</p>
+          </div>
+          <div class="framing-card">
+            <h3>Service Users</h3>
+            <ul id="service-users" class="mini-list"></ul>
+          </div>
+          <div class="framing-card">
+            <h3>Scope</h3>
+            <div class="two-col">
+              <div>
+                <div class="subtle-label">In scope</div>
+                <ul id="scope-in" class="mini-list"></ul>
+              </div>
+              <div>
+                <div class="subtle-label">Out of scope</div>
+                <ul id="scope-out" class="mini-list"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="framing-card">
+            <h3>Assessment approach</h3>
+            <p class="muted-box">The report should reflect the service as a whole, but this prototype assesses the supplied page HTML and any visible journey cues from that page.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="top-issues" class="section top-issues">
+        <h2>Top 5 issues to address</h2>
+        <div id="top-issues-content" class="stack"></div>
+      </section>
+
+      <section id="service-standard" class="section">
+        <h2>UK Government Service Standard</h2>
+        <div id="service-standard-content"></div>
+      </section>
+
+      <section id="wcag" class="section">
+        <h2>WCAG 2.2 accessibility</h2>
+        <div id="wcag-content"></div>
+      </section>
+
+      <section id="perf-seo" class="section">
+        <h2>Performance and SEO</h2>
+        <div id="perf-seo-content"></div>
+      </section>
+
+      <section id="security" class="section">
+        <h2>Security and privacy</h2>
+        <div id="security-content"></div>
+      </section>
+
+      <section id="environment" class="section">
+        <h2>Environmental sustainability</h2>
+        <div id="environment-content"></div>
+      </section>
+    </div>
+
+    <p class="footer-note">RAG colours use GOV.UK style badges. This page is designed to render the AI output directly from the assessment webhook.</p>
   </div>
 </div>
 
 <script>
-  // Only the assessment webhook
   const ASSESS_URL = 'http://localhost:5678/webhook/siteaudit-assess';
 
   const form = document.getElementById('assess-form');
@@ -142,12 +385,21 @@
 
   const scoreEl = document.getElementById('score');
   const summaryEl = document.getElementById('summary');
-  const topIssuesEl = document.getElementById('top-issues');
-  const serviceStandardEl = document.getElementById('service-standard');
-  const wcagEl = document.getElementById('wcag');
-  const perfSeoEl = document.getElementById('perf-seo');
-  const securityEl = document.getElementById('security');
-  const envEl = document.getElementById('environment');
+  const overallRatingEl = document.getElementById('overall-rating');
+  const highlightsEl = document.getElementById('highlights');
+  const serviceTypeEl = document.getElementById('service-type');
+
+  const serviceDescriptionEl = document.getElementById('service-description');
+  const serviceUsersEl = document.getElementById('service-users');
+  const scopeInEl = document.getElementById('scope-in');
+  const scopeOutEl = document.getElementById('scope-out');
+
+  const topIssuesContentEl = document.getElementById('top-issues-content');
+  const serviceStandardContentEl = document.getElementById('service-standard-content');
+  const wcagContentEl = document.getElementById('wcag-content');
+  const perfSeoContentEl = document.getElementById('perf-seo-content');
+  const securityContentEl = document.getElementById('security-content');
+  const environmentContentEl = document.getElementById('environment-content');
 
   function setLoading(isLoading, message) {
     runButton.disabled = isLoading;
@@ -164,126 +416,205 @@
     errorEl.textContent = '';
   }
 
-  function renderServiceStandard(ss = {}) {
-    const points = Object.entries(ss);
-    if (!points.length) {
-      serviceStandardEl.innerHTML =
-        '<h3>UK Government Service Standard</h3>' +
-        '<p class="muted">No detailed breakdown returned.</p>';
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function ratingClass(rating) {
+    const r = String(rating || '').toLowerCase();
+    if (r.includes('green')) return 'green';
+    if (r.includes('amber')) return 'amber';
+    if (r.includes('red')) return 'red';
+    return '';
+  }
+
+  function badgeHtml(text, rating) {
+    const cls = ratingClass(rating);
+    return `<span class="badge ${cls}">${escapeHtml(text)}</span>`;
+  }
+
+  function scorePill(score, rating) {
+    const cls = ratingClass(rating);
+    return `<span class="score-pill ${cls}">${escapeHtml(score)} / 100</span>`;
+  }
+
+  function prettyPointName(key) {
+    const map = {
+      point_1_user_needs: '1. User Needs',
+      point_2_whole_problem: '2. Whole Problem',
+      point_3_joined_up: '3. Joined Up',
+      point_4_simple: '4. Simple',
+      point_5_accessible: '5. Accessible',
+      point_6_multidisciplinary: '6. Multidisciplinary Team',
+      point_7_agile: '7. Agile Ways of Working',
+      point_8_iterate: '8. Iterate and Improve Frequently',
+      point_9_secure_privacy: '9. Secure and Private',
+      point_10_success_metrics: '10. Define Success',
+      point_11_tools_tech: '11. Choose the Right Tools and Technology',
+      point_12_open_source: '12. Make New Source Code Open',
+      point_13_open_standards: '13. Use Open Standards and Common Components',
+      point_14_reliable_service: '14. Operate a Reliable Service'
+    };
+    return map[key] || key.replace(/_/g, ' ');
+  }
+
+  function renderList(items) {
+    if (!Array.isArray(items) || !items.length) return '<li>No items returned.</li>';
+    return items.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+  }
+
+  function renderStringList(items) {
+    if (!Array.isArray(items) || !items.length) return '<div class="empty">No items returned.</div>';
+    return `<ul class="mini-list">${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+  }
+
+  function renderHighlights(data) {
+    const parts = [];
+    if (data.overall_rating) parts.push(badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating));
+    if (data.wcag && data.wcag.status) parts.push(badgeHtml(`WCAG: ${String(data.wcag.status).toUpperCase()}`, data.wcag.status));
+    if (data.service_framing && data.service_framing.service_description) parts.push(`<div class="muted-box small"><strong>Service:</strong> ${escapeHtml(data.service_framing.service_description)}</div>`);
+    highlightsEl.innerHTML = parts.join('');
+  }
+
+  function renderServiceFraming(data) {
+    const framing = data.service_framing || {};
+    serviceDescriptionEl.textContent = framing.service_description || 'No service description returned.';
+    serviceUsersEl.innerHTML = renderList(framing.service_users || []);
+    scopeInEl.innerHTML = renderList((framing.scope && framing.scope.in_scope) || []);
+    scopeOutEl.innerHTML = renderList((framing.scope && framing.scope.out_of_scope) || []);
+    serviceTypeEl.textContent = data.service_type_guess ? String(data.service_type_guess).toUpperCase() : 'SERVICE FRAMING';
+  }
+
+  function renderTopIssues(data) {
+    const issues = Array.isArray(data.top_5_issues) ? data.top_5_issues : [];
+    if (!issues.length) {
+      topIssuesContentEl.innerHTML = '<div class="empty">No top issues returned.</div>';
       return;
     }
+    topIssuesContentEl.innerHTML = issues.map((issue, idx) => `
+      <div class="item-card">
+        <h4>${idx + 1}. ${escapeHtml(issue)}</h4>
+      </div>
+    `).join('');
+  }
 
-    let html = '<h3>UK Government Service Standard</h3>';
-    for (const [key, value] of points) {
-      if (!value || typeof value !== 'object') continue;
-      html += `<h4>${key.replace(/_/g, ' ')}</h4>`;
-      if (value.rating) {
-        html += `<p><span class="tag">Rating: ${value.rating}</span></p>`;
-      }
-      if (typeof value.score === 'number') {
-        html += `<p class="muted">Score: ${value.score}/100</p>`;
-      }
-      if (Array.isArray(value.comments) && value.comments.length) {
-        html += '<p><strong>Comments:</strong></p><ul>';
-        for (const c of value.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      if (Array.isArray(value.actions) && value.actions.length) {
-        html += '<p><strong>Actions:</strong></p><ul>';
-        for (const a of value.actions) html += `<li>${a}</li>`;
-        html += '</ul>';
-      }
-    }
-    serviceStandardEl.innerHTML = html;
+  function renderServiceStandard(ss = {}) {
+    const order = [
+      'point_1_user_needs',
+      'point_2_whole_problem',
+      'point_3_joined_up',
+      'point_4_simple',
+      'point_5_accessible',
+      'point_6_multidisciplinary',
+      'point_7_agile',
+      'point_8_iterate',
+      'point_9_secure_privacy',
+      'point_10_success_metrics',
+      'point_11_tools_tech',
+      'point_12_open_source',
+      'point_13_open_standards',
+      'point_14_reliable_service'
+    ];
+
+    const rows = order.map(key => {
+      const value = ss[key] || {};
+      const rating = value.rating || '';
+      const comments = Array.isArray(value.comments) ? value.comments : [];
+      const actions = Array.isArray(value.actions) ? value.actions : [];
+      const evidence = Array.isArray(value.evidence) ? value.evidence : [];
+      return `
+        <tr>
+          <td class="ss-point">${prettyPointName(key)}</td>
+          <td>${rating ? badgeHtml(String(rating).toUpperCase(), rating) : '<span class="muted">Not returned</span>'}</td>
+          <td>${typeof value.score === 'number' ? scorePill(value.score, rating) : '<span class="muted">—</span>'}</td>
+          <td>
+            <div class="stack">
+              ${evidence.length ? `<div><strong>Evidence</strong><ul>${evidence.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
+              ${comments.length ? `<div><strong>Comments</strong><ul>${comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="muted">No comments returned.</div>'}
+              ${actions.length ? `<div><strong>Actions</strong><ul>${actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    serviceStandardContentEl.innerHTML = `
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th>Service Standard point</th>
+            <th>Rating</th>
+            <th>Score</th>
+            <th>Assessment notes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function renderSimpleSection(title, score, comments) {
+    const scoreHtml = typeof score === 'number' ? `<p>${scorePill(score, '')}</p>` : '';
+    const commentHtml = Array.isArray(comments) && comments.length ? `<ul>${comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>` : '<div class="empty">No comments returned.</div>';
+    return `
+      <div class="item-card">
+        <h3>${title}</h3>
+        ${scoreHtml}
+        ${commentHtml}
+      </div>
+    `;
   }
 
   function renderResults(data) {
     resultsEl.style.display = 'block';
 
     const score = typeof data.overall_score === 'number' ? data.overall_score : 0;
-    scoreEl.textContent = `Overall score: ${score}/100`;
+    scoreEl.textContent = `${score}`;
     summaryEl.textContent = data.summary || 'No summary provided.';
 
-    if (Array.isArray(data.top_5_issues) && data.top_5_issues.length) {
-      let html = '<h3>Top 5 issues to address</h3><ul>';
-      for (const issue of data.top_5_issues) html += `<li>${issue}</li>`;
-      html += '</ul>';
-      topIssuesEl.innerHTML = html;
-    } else {
-      topIssuesEl.innerHTML =
-        '<h3>Top 5 issues to address</h3>' +
-        '<p class="muted">No issues returned.</p>';
-    }
+    overallRatingEl.innerHTML = data.overall_rating ? badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating) : '';
 
+    renderHighlights(data);
+    renderServiceFraming(data);
+    renderTopIssues(data);
     renderServiceStandard(data.service_standard || {});
 
-    if (data.wcag) {
-      let html = '<h3>WCAG 2.2 accessibility</h3>';
-      if (data.wcag.status) {
-        html += `<p><span class="tag">Status: ${data.wcag.status}</span></p>`;
-      }
-      if (Array.isArray(data.wcag.issues) && data.wcag.issues.length) {
-        html += '<ul>';
-        for (const i of data.wcag.issues) html += `<li>${i}</li>`;
-        html += '</ul>';
-      }
-      wcagEl.innerHTML = html;
-    } else {
-      wcagEl.innerHTML =
-        '<h3>WCAG 2.2 accessibility</h3>' +
-        '<p class="muted">No data returned.</p>';
-    }
+    const wcag = data.wcag || {};
+    wcagContentEl.innerHTML = `
+      <div class="stack">
+        <div>${wcag.status ? badgeHtml(String(wcag.status).toUpperCase(), wcag.status) : '<span class="empty">No WCAG status returned.</span>'}</div>
+        ${Array.isArray(wcag.issues) && wcag.issues.length ? `<div><strong>Issues</strong><ul>${wcag.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>` : '<div class="empty">No WCAG issues returned.</div>'}
+      </div>
+    `;
 
-    if (data.performance_seo) {
-      let html = '<h3>Performance and SEO</h3>';
-      if (typeof data.performance_seo.score === 'number') {
-        html += `<p class="muted">Score: ${data.performance_seo.score}/100</p>`;
-      }
-      if (Array.isArray(data.performance_seo.comments) && data.performance_seo.comments.length) {
-        html += '<ul>';
-        for (const c of data.performance_seo.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      perfSeoEl.innerHTML = html;
-    } else {
-      perfSeoEl.innerHTML =
-        '<h3>Performance and SEO</h3>' +
-        '<p class="muted">No data returned.</p>';
-    }
+    const perfSeo = data.performance_seo || {};
+    perfSeoContentEl.innerHTML = `
+      <div class="stack">
+        ${typeof perfSeo.score === 'number' ? `<div>${scorePill(perfSeo.score, '')}</div>` : ''}
+        ${Array.isArray(perfSeo.comments) && perfSeo.comments.length ? `<div><strong>Comments</strong><ul>${perfSeo.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="empty">No performance and SEO comments returned.</div>'}
+      </div>
+    `;
 
-    if (data.security_privacy) {
-      let html = '<h3>Privacy and security</h3>';
-      if (typeof data.security_privacy.score === 'number') {
-        html += `<p class="muted">Score: ${data.security_privacy.score}/100</p>`;
-      }
-      if (Array.isArray(data.security_privacy.comments) && data.security_privacy.comments.length) {
-        html += '<ul>';
-        for (const c of data.security_privacy.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      securityEl.innerHTML = html;
-    } else {
-      securityEl.innerHTML =
-        '<h3>Privacy and security</h3>' +
-        '<p class="muted">No data returned.</p>';
-    }
+    const security = data.security_privacy || {};
+    securityContentEl.innerHTML = `
+      <div class="stack">
+        ${typeof security.score === 'number' ? `<div>${scorePill(security.score, '')}</div>` : ''}
+        ${Array.isArray(security.comments) && security.comments.length ? `<div><strong>Comments</strong><ul>${security.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="empty">No security and privacy comments returned.</div>'}
+      </div>
+    `;
 
-    if (data.environment) {
-      let html = '<h3>Environmental sustainability</h3>';
-      if (typeof data.environment.score === 'number') {
-        html += `<p class="muted">Score: ${data.environment.score}/100</p>`;
-      }
-      if (Array.isArray(data.environment.comments) && data.environment.comments.length) {
-        html += '<ul>';
-        for (const c of data.environment.comments) html += `<li>${c}</li>`;
-        html += '</ul>';
-      }
-      envEl.innerHTML = html;
-    } else {
-      envEl.innerHTML =
-        '<h3>Environmental sustainability</h3>' +
-        '<p class="muted">No data returned.</p>';
-    }
+    const env = data.environment || {};
+    environmentContentEl.innerHTML = `
+      <div class="stack">
+        ${typeof env.score === 'number' ? `<div>${scorePill(env.score, '')}</div>` : ''}
+        ${Array.isArray(env.comments) && env.comments.length ? `<div><strong>Comments</strong><ul>${env.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="empty">No environmental comments returned.</div>'}
+      </div>
+    `;
   }
 
   async function runAssessment(event) {
@@ -312,10 +643,7 @@
         return;
       }
 
-      console.log('Assess status', assessRes.status);
       const rawText = await assessRes.text();
-      console.log('Assess raw body', rawText);
-
       const assessmentRaw = rawText ? JSON.parse(rawText) : {};
       const assessment = Array.isArray(assessmentRaw) ? (assessmentRaw[0] || {}) : assessmentRaw;
 
