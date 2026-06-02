@@ -12,7 +12,6 @@
       --muted: #505a5f;
       --border: #d8dce0;
       --blue: #1d70b8;
-      --blue-dark: #0b4f8a;
       --green: #00703c;
       --amber: #b58800;
       --red: #d4351c;
@@ -123,6 +122,7 @@
     .badge.green { background: var(--green); }
     .badge.amber { background: var(--amber); }
     .badge.red { background: var(--red); }
+    .badge.grey { background: #505a5f; }
     .side-card {
       background: #fff;
       border: 1px solid var(--border);
@@ -131,7 +131,6 @@
       padding: 22px;
     }
     .side-card h3 { margin: 0 0 10px; }
-    .side-card ul { margin: 10px 0 0; padding-left: 20px; }
     .section-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
     .section {
       background: #fff;
@@ -148,11 +147,7 @@
       border-radius: 12px;
       color: var(--text);
     }
-    .framing-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
+    .framing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     @media (max-width: 800px) { .framing-grid { grid-template-columns: 1fr; } }
     .framing-card {
       border: 1px solid #e6e8ec;
@@ -170,10 +165,10 @@
     }
     .screenshot-wrap img { width: 100%; display: block; height: auto; }
     .screenshot-fallback { padding: 14px 16px; }
-    .ss-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 12px; }
+    .ss-table { width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; }
     .ss-table th, .ss-table td { border-top: 1px solid #e6e8ec; padding: 14px 12px; vertical-align: top; text-align: left; }
-    .ss-table thead th { background: #f8f9fb; border-top: 0; font-size: 0.95rem; }
-    .ss-point { font-weight: 800; color: var(--text); white-space: nowrap; }
+    .ss-table thead th { background: #f8f9fb; border-top: 0; font-size: 0.95rem; font-weight: 700; }
+    .ss-point { font-weight: 800; color: var(--text); }
     .score-pill {
       display: inline-block;
       padding: 5px 10px;
@@ -188,12 +183,7 @@
     .score-pill.amber { background: rgba(181,136,0,0.14); color: #7a5b00; }
     .score-pill.red { background: rgba(212,53,28,0.12); color: var(--red); }
     .stack { display: grid; gap: 10px; }
-    .item-card {
-      border: 1px solid #e6e8ec;
-      border-radius: 12px;
-      padding: 14px 16px;
-      background: #fff;
-    }
+    .item-card { border: 1px solid #e6e8ec; border-radius: 12px; padding: 14px 16px; background: #fff; }
     .item-card h4 { margin: 0 0 8px; font-size: 1rem; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
@@ -207,14 +197,9 @@
       margin-bottom: 10px;
     }
     .footer-note { margin-top: 16px; color: var(--muted); font-size: 0.95rem; }
-    .empty {
-      color: var(--muted);
-      background: #fbfbfb;
-      border: 1px dashed #d9dde2;
-      padding: 12px 14px;
-      border-radius: 12px;
-    }
+    .empty { color: var(--muted); background: #fbfbfb; border: 1px dashed #d9dde2; padding: 12px 14px; border-radius: 12px; }
     .small { font-size: 0.95rem; }
+    .not-assessed { color: var(--muted); font-style: italic; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -244,7 +229,7 @@
           <strong id="score">0</strong><span>/100 overall score</span>
         </div>
         <div id="overall-rating" class="badge-row"></div>
-        <p id="summary" class="small" style="margin-bottom:0;"></p>
+        <p id="summary" class="small" style="margin-bottom:0;margin-top:12px;"></p>
       </section>
 
       <aside class="side-card" aria-label="Top line highlights">
@@ -255,7 +240,7 @@
     </div>
 
     <div class="section-grid">
-      <section id="service-framing" class="section">
+      <section class="section">
         <h2>Service framing</h2>
         <div class="framing-grid">
           <div class="framing-card">
@@ -289,32 +274,32 @@
         </div>
       </section>
 
-      <section id="top-issues" class="section top-issues">
+      <section class="section">
         <h2>Top 5 issues to address</h2>
         <div id="top-issues-content" class="stack"></div>
       </section>
 
-      <section id="service-standard" class="section">
+      <section class="section">
         <h2>UK Government Service Standard</h2>
         <div id="service-standard-content"></div>
       </section>
 
-      <section id="wcag" class="section">
+      <section class="section">
         <h2>WCAG 2.2 accessibility</h2>
         <div id="wcag-content"></div>
       </section>
 
-      <section id="perf-seo" class="section">
+      <section class="section">
         <h2>Performance and SEO</h2>
         <div id="perf-seo-content"></div>
       </section>
 
-      <section id="security" class="section">
+      <section class="section">
         <h2>Security and privacy</h2>
         <div id="security-content"></div>
       </section>
 
-      <section id="environment" class="section">
+      <section class="section">
         <h2>Environmental sustainability</h2>
         <div id="environment-content"></div>
       </section>
@@ -379,11 +364,11 @@
   }
 
   function ratingClass(rating) {
-    const r = String(rating || '').toLowerCase();
-    if (r.includes('green')) return 'green';
-    if (r.includes('amber')) return 'amber';
-    if (r.includes('red')) return 'red';
-    return '';
+    const r = String(rating || '').toLowerCase().trim();
+    if (r === 'met' || r === 'good' || r === 'green' || r === 'pass' || r === 'compliant') return 'green';
+    if (r === 'needs improvement' || r === 'amber' || r === 'partial' || r === 'partially met' || r === 'partial compliance' || r === 'likely compliant') return 'amber';
+    if (r === 'poor' || r === 'not met' || r === 'red' || r === 'fail' || r === 'non-compliant') return 'red';
+    return 'grey';
   }
 
   function badgeHtml(text, rating) {
@@ -393,7 +378,7 @@
 
   function scorePill(score, rating) {
     const cls = ratingClass(rating);
-    return `<span class="score-pill ${cls}">${escapeHtml(score)} / 100</span>`;
+    return `<span class="score-pill ${cls}">${escapeHtml(String(score))} / 100</span>`;
   }
 
   function prettyPointName(key) {
@@ -401,13 +386,13 @@
       point_1_user_needs: '1. User Needs',
       point_2_whole_problem: '2. Whole Problem',
       point_3_joined_up: '3. Joined Up',
-      point_4_simple: '4. Simple',
-      point_5_accessible: '5. Accessible',
+      point_4_simple: '4. Simple to Use',
+      point_5_accessible: '5. Accessible and Inclusive',
       point_6_multidisciplinary: '6. Multidisciplinary Team',
       point_7_agile: '7. Agile Ways of Working',
       point_8_iterate: '8. Iterate and Improve Frequently',
       point_9_secure_privacy: '9. Secure and Private',
-      point_10_success_metrics: '10. Define Success',
+      point_10_success_metrics: '10. Define What Success Looks Like',
       point_11_tools_tech: '11. Choose the Right Tools and Technology',
       point_12_open_source: '12. Make New Source Code Open',
       point_13_open_standards: '13. Use Open Standards and Common Components',
@@ -417,7 +402,7 @@
   }
 
   function renderList(items) {
-    if (!Array.isArray(items) || !items.length) return '<li>No items returned.</li>';
+    if (!Array.isArray(items) || !items.length) return '<li class="not-assessed">No items returned.</li>';
     return items.map(item => `<li>${escapeHtml(item)}</li>`).join('');
   }
 
@@ -425,26 +410,39 @@
     const parts = [];
     if (data.overall_rating) parts.push(badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating));
     if (data.wcag && data.wcag.status) parts.push(badgeHtml(`WCAG: ${String(data.wcag.status).toUpperCase()}`, data.wcag.status));
-    if (data.service_framing && data.service_framing.service_description) parts.push(`<div class="muted-box small"><strong>Service:</strong> ${escapeHtml(data.service_framing.service_description)}</div>`);
+    if (data.service_framing && data.service_framing.service_description) {
+      parts.push(`<div class="muted-box small"><strong>Service:</strong> ${escapeHtml(data.service_framing.service_description)}</div>`);
+    }
     highlightsEl.innerHTML = parts.join('');
   }
 
   function renderServiceFraming(data) {
     const framing = data.service_framing || {};
+    const scope = framing.scope || {};
+
     serviceDescriptionEl.textContent = framing.service_description || 'No service description returned.';
     serviceUsersEl.innerHTML = renderList(framing.service_users || []);
-    scopeInEl.innerHTML = renderList((framing.scope && framing.scope.in_scope) || []);
-    scopeOutEl.innerHTML = renderList((framing.scope && framing.scope.out_of_scope) || []);
+    scopeInEl.innerHTML = renderList(scope.in_scope || []);
+    scopeOutEl.innerHTML = renderList(scope.out_of_scope || []);
     serviceTypeEl.textContent = data.service_type_guess ? String(data.service_type_guess).toUpperCase() : 'SERVICE FRAMING';
 
-    const screenshotUrl = data.screenshot_url || '';
+    const screenshotUrl = (data.screenshot_url || '').trim();
     if (screenshotUrl) {
       screenshotEl.src = screenshotUrl;
-      screenshotEl.style.display = 'block';
-      screenshotEmptyEl.style.display = 'none';
+      screenshotEl.onload = () => {
+        screenshotEl.style.display = 'block';
+        screenshotEmptyEl.style.display = 'none';
+      };
+      screenshotEl.onerror = () => {
+        screenshotEl.style.display = 'none';
+        screenshotEmptyEl.style.display = 'block';
+        screenshotEmptyEl.textContent = 'Screenshot URL was provided but the image could not be loaded.';
+      };
     } else {
+      screenshotEl.removeAttribute('src');
       screenshotEl.style.display = 'none';
       screenshotEmptyEl.style.display = 'block';
+      screenshotEmptyEl.textContent = 'No screenshot returned.';
     }
   }
 
@@ -485,15 +483,17 @@
       const comments = Array.isArray(value.comments) ? value.comments : [];
       const actions = Array.isArray(value.actions) ? value.actions : [];
       const evidence = Array.isArray(value.evidence) ? value.evidence : [];
+      const isNotAssessed = !rating || rating.toLowerCase() === 'not assessed';
+
       return `
         <tr>
           <td class="ss-point">${prettyPointName(key)}</td>
-          <td>${rating ? badgeHtml(String(rating).toUpperCase(), rating) : '<span class="muted">Not returned</span>'}</td>
-          <td>${typeof value.score === 'number' ? scorePill(value.score, rating) : '<span class="muted">—</span>'}</td>
+          <td>${rating ? badgeHtml(rating, rating) : '<span class="not-assessed">Not returned</span>'}</td>
+          <td>${typeof value.score === 'number' ? scorePill(value.score, rating) : '<span class="not-assessed">—</span>'}</td>
           <td>
             <div class="stack">
               ${evidence.length ? `<div><strong>Evidence</strong><ul>${evidence.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
-              ${comments.length ? `<div><strong>Comments</strong><ul>${comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="muted">No comments returned.</div>'}
+              ${comments.length ? `<div><strong>Comments</strong><ul>${comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : (isNotAssessed ? '<span class="not-assessed">Could not be assessed from static HTML.</span>' : '<span class="not-assessed">No comments returned.</span>')}
               ${actions.length ? `<div><strong>Actions</strong><ul>${actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div>` : ''}
             </div>
           </td>
@@ -505,9 +505,9 @@
       <table class="ss-table">
         <thead>
           <tr>
-            <th>Service Standard point</th>
-            <th>Rating</th>
-            <th>Score</th>
+            <th style="width:22%">Service Standard point</th>
+            <th style="width:14%">Rating</th>
+            <th style="width:12%">Score</th>
             <th>Assessment notes</th>
           </tr>
         </thead>
@@ -518,11 +518,8 @@
 
   function renderResults(data) {
     resultsEl.style.display = 'block';
-
-    const score = typeof data.overall_score === 'number' ? data.overall_score : 0;
-    scoreEl.textContent = `${score}`;
+    scoreEl.textContent = typeof data.overall_score === 'number' ? String(data.overall_score) : '0';
     summaryEl.textContent = data.summary || 'No summary provided.';
-
     overallRatingEl.innerHTML = data.overall_rating ? badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating) : '';
 
     renderHighlights(data);
@@ -533,8 +530,10 @@
     const wcag = data.wcag || {};
     wcagContentEl.innerHTML = `
       <div class="stack">
-        <div>${wcag.status ? badgeHtml(String(wcag.status).toUpperCase(), wcag.status) : '<span class="empty">No WCAG status returned.</span>'}</div>
-        ${Array.isArray(wcag.issues) && wcag.issues.length ? `<div><strong>Issues</strong><ul>${wcag.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>` : '<div class="empty">No WCAG issues returned.</div>'}
+        <div>${wcag.status ? badgeHtml(String(wcag.status), wcag.status) : '<span class="empty">No WCAG status returned.</span>'}</div>
+        ${Array.isArray(wcag.issues) && wcag.issues.length
+          ? `<div><strong>Issues identified</strong><ul>${wcag.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No WCAG issues returned.</div>'}
       </div>
     `;
 
@@ -542,7 +541,9 @@
     perfSeoContentEl.innerHTML = `
       <div class="stack">
         ${typeof perfSeo.score === 'number' ? `<div>${scorePill(perfSeo.score, '')}</div>` : ''}
-        ${Array.isArray(perfSeo.comments) && perfSeo.comments.length ? `<div><strong>Comments</strong><ul>${perfSeo.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="empty">No performance and SEO comments returned.</div>'}
+        ${Array.isArray(perfSeo.comments) && perfSeo.comments.length
+          ? `<div><strong>Comments</strong><ul>${perfSeo.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No performance and SEO comments returned.</div>'}
       </div>
     `;
 
@@ -550,7 +551,9 @@
     securityContentEl.innerHTML = `
       <div class="stack">
         ${typeof security.score === 'number' ? `<div>${scorePill(security.score, '')}</div>` : ''}
-        ${Array.isArray(security.comments) && security.comments.length ? `<div><strong>Comments</strong><ul>${security.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="empty">No security and privacy comments returned.</div>'}
+        ${Array.isArray(security.comments) && security.comments.length
+          ? `<div><strong>Comments</strong><ul>${security.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No security and privacy comments returned.</div>'}
       </div>
     `;
 
@@ -558,7 +561,9 @@
     environmentContentEl.innerHTML = `
       <div class="stack">
         ${typeof env.score === 'number' ? `<div>${scorePill(env.score, '')}</div>` : ''}
-        ${Array.isArray(env.comments) && env.comments.length ? `<div><strong>Comments</strong><ul>${env.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : '<div class="empty">No environmental comments returned.</div>'}
+        ${Array.isArray(env.comments) && env.comments.length
+          ? `<div><strong>Comments</strong><ul>${env.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No environmental comments returned.</div>'}
       </div>
     `;
   }
