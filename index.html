@@ -331,3 +331,467 @@
 </head>
 <body>
 <div class="container">
+  <header class="hero">
+    <h1>Service assessment prototype</h1>
+    <p>Enter a URL to assess. The tool will run an AI assessment and present a GOV.UK style report with a service framing section, RAG ratings, actions, and supporting commentary.</p>
+  </header>
+
+  <section class="panel" aria-label="Run assessment">
+    <form id="assess-form">
+      <label for="service-url">Service URL</label>
+      <div class="field-row">
+        <div class="input-wrap">
+          <input id="service-url" name="service-url" type="url" placeholder="https://www.legislation.gov.uk/" required>
+        </div>
+
+        <div class="action-slot">
+          <button id="run-button" type="submit">Run assessment</button>
+
+          <div id="running-state" class="running-state" aria-live="polite">
+            <div class="spinner" aria-hidden="true"></div>
+            <div class="running-copy">
+              <div class="running-title">Running assessment</div>
+              <div class="running-text">Checking the page, gathering technical evidence, and preparing the report.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+    <div id="status"></div>
+    <div id="error" class="error" role="alert"></div>
+  </section>
+
+  <div id="results">
+    <div class="results-head">
+      <section class="score-card" aria-label="Overall assessment result">
+        <h2>Assessment results</h2>
+        <div class="overall-score">
+          <strong id="score">0</strong><span>/100 overall score</span>
+        </div>
+        <div id="overall-rating" class="badge-row"></div>
+        <p id="summary" class="small" style="margin-bottom:0;margin-top:12px;"></p>
+      </section>
+
+      <aside class="side-card" aria-label="Top line highlights">
+        <h3>Top line</h3>
+        <div id="service-type" class="subtle-label"></div>
+        <div id="highlights" class="stack"></div>
+      </aside>
+    </div>
+
+    <div class="section-grid">
+      <section class="section">
+        <h2>Service framing</h2>
+        <div class="framing-grid">
+          <div class="framing-card">
+            <h3>Service description</h3>
+            <p id="service-description" class="muted-box">No service description returned.</p>
+          </div>
+          <div class="framing-card">
+            <h3>Service users</h3>
+            <ul id="service-users" class="mini-list"></ul>
+          </div>
+          <div class="framing-card">
+            <h3>Scope</h3>
+            <div class="two-col">
+              <div>
+                <div class="subtle-label">In scope</div>
+                <ul id="scope-in" class="mini-list"></ul>
+              </div>
+              <div>
+                <div class="subtle-label">Out of scope</div>
+                <ul id="scope-out" class="mini-list"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="framing-card">
+            <h3>Website screenshot</h3>
+            <div class="screenshot-wrap">
+              <img id="audit-screenshot" alt="Screenshot of the assessed website" style="display:none;">
+              <div id="screenshot-empty" class="screenshot-fallback muted-box">No screenshot returned.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Top 5 issues to address</h2>
+        <div id="top-issues-content" class="stack"></div>
+      </section>
+
+      <section class="section">
+        <h2>UK Government Service Standard</h2>
+        <div id="service-standard-content"></div>
+      </section>
+
+      <section class="section">
+        <h2>WCAG 2.2 accessibility</h2>
+        <div id="wcag-content"></div>
+      </section>
+
+      <section class="section">
+        <h2>Performance and SEO</h2>
+        <div id="perf-seo-content"></div>
+      </section>
+
+      <section class="section">
+        <h2>Security and privacy</h2>
+        <div id="security-content"></div>
+      </section>
+
+      <section class="section">
+        <h2>Environmental sustainability</h2>
+        <div id="environment-content"></div>
+      </section>
+    </div>
+
+    <p class="footer-note">This page renders the assessment JSON returned by your n8n webhook.</p>
+  </div>
+</div>
+
+<script>
+  const ASSESS_URL = 'http://localhost:5678/webhook/siteaudit-assess';
+
+  const form = document.getElementById('assess-form');
+  const runButton = document.getElementById('run-button');
+  const runningStateEl = document.getElementById('running-state');
+  const statusEl = document.getElementById('status');
+  const errorEl = document.getElementById('error');
+  const resultsEl = document.getElementById('results');
+
+  const scoreEl = document.getElementById('score');
+  const summaryEl = document.getElementById('summary');
+  const overallRatingEl = document.getElementById('overall-rating');
+  const highlightsEl = document.getElementById('highlights');
+  const serviceTypeEl = document.getElementById('service-type');
+
+  const serviceDescriptionEl = document.getElementById('service-description');
+  const serviceUsersEl = document.getElementById('service-users');
+  const scopeInEl = document.getElementById('scope-in');
+  const scopeOutEl = document.getElementById('scope-out');
+
+  const screenshotEl = document.getElementById('audit-screenshot');
+  const screenshotEmptyEl = document.getElementById('screenshot-empty');
+
+  const topIssuesContentEl = document.getElementById('top-issues-content');
+  const serviceStandardContentEl = document.getElementById('service-standard-content');
+  const wcagContentEl = document.getElementById('wcag-content');
+  const perfSeoContentEl = document.getElementById('perf-seo-content');
+  const securityContentEl = document.getElementById('security-content');
+  const environmentContentEl = document.getElementById('environment-content');
+
+  function setLoading(isLoading, message) {
+    runButton.style.display = isLoading ? 'none' : 'inline-flex';
+    runButton.disabled = isLoading;
+    runningStateEl.classList.toggle('active', isLoading);
+    statusEl.textContent = message || (isLoading ? 'Running assessment…' : '');
+  }
+
+  function showError(msg) {
+    errorEl.style.display = 'block';
+    errorEl.textContent = msg;
+  }
+
+  function clearError() {
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function ratingClass(rating) {
+    const r = String(rating || '').toLowerCase().trim();
+    if (r === 'met' || r === 'good' || r === 'green' || r === 'pass' || r === 'compliant') return 'green';
+    if (r === 'needs improvement' || r === 'amber' || r === 'partial' || r === 'partially met' || r === 'partial compliance' || r === 'likely compliant') return 'amber';
+    if (r === 'poor' || r === 'not met' || r === 'red' || r === 'fail' || r === 'non-compliant') return 'red';
+    return 'grey';
+  }
+
+  function badgeHtml(text, rating) {
+    const cls = ratingClass(rating);
+    return `<span class="badge ${cls}">${escapeHtml(text)}</span>`;
+  }
+
+  function scorePill(score, rating) {
+    const cls = ratingClass(rating);
+    return `<span class="score-pill ${cls}">${escapeHtml(String(score))} / 100</span>`;
+  }
+
+  function prettyPointName(key) {
+    const map = {
+      point_1_user_needs: '1. User Needs',
+      point_2_whole_problem: '2. Whole Problem',
+      point_3_joined_up: '3. Joined Up',
+      point_4_simple: '4. Simple to Use',
+      point_5_accessible: '5. Accessible and Inclusive',
+      point_6_multidisciplinary: '6. Multidisciplinary Team',
+      point_7_agile: '7. Agile Ways of Working',
+      point_8_iterate: '8. Iterate and Improve Frequently',
+      point_9_secure_privacy: '9. Secure and Private',
+      point_10_success_metrics: '10. Define What Success Looks Like',
+      point_11_tools_tech: '11. Choose the Right Tools and Technology',
+      point_12_open_source: '12. Make New Source Code Open',
+      point_13_open_standards: '13. Use Open Standards and Common Components',
+      point_14_reliable_service: '14. Operate a Reliable Service'
+    };
+    return map[key] || key.replace(/_/g, ' ');
+  }
+
+  function renderList(items) {
+    if (!Array.isArray(items) || !items.length) {
+      return '<li class="not-assessed">No items returned.</li>';
+    }
+    return items.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+  }
+
+  function renderHighlights(data) {
+    const parts = [];
+    if (data.overall_rating) {
+      parts.push(badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating));
+    }
+    if (data.wcag && data.wcag.status) {
+      parts.push(badgeHtml(`WCAG: ${String(data.wcag.status).toUpperCase()}`, data.wcag.status));
+    }
+    if (data.service_framing && data.service_framing.service_description) {
+      parts.push(`<div class="muted-box small"><strong>Service:</strong> ${escapeHtml(data.service_framing.service_description)}</div>`);
+    }
+    highlightsEl.innerHTML = parts.join('');
+  }
+
+  function buildMicrolinkScreenshotUrl(url) {
+    if (!url) return '';
+    const base = 'https://api.microlink.io/';
+    const params = new URLSearchParams({
+      url,
+      screenshot: 'true',
+      meta: 'false',
+      embed: 'screenshot.url',
+      fullPage: 'true'
+    });
+    return `${base}?${params.toString()}`;
+  }
+
+  function resetScreenshot() {
+    screenshotEl.onload = null;
+    screenshotEl.onerror = null;
+    screenshotEl.removeAttribute('src');
+    screenshotEl.style.display = 'none';
+    screenshotEmptyEl.style.display = 'block';
+    screenshotEmptyEl.textContent = 'No screenshot returned.';
+  }
+
+  function renderScreenshot(data, assessedUrl) {
+    const returnedUrl = (data.screenshot_url || '').trim();
+    const fallbackMicrolinkUrl = buildMicrolinkScreenshotUrl(assessedUrl);
+    const screenshotUrl = returnedUrl || fallbackMicrolinkUrl;
+
+    resetScreenshot();
+
+    if (!screenshotUrl) return;
+
+    screenshotEl.onload = () => {
+      screenshotEl.style.display = 'block';
+      screenshotEmptyEl.style.display = 'none';
+    };
+
+    screenshotEl.onerror = () => {
+      screenshotEl.style.display = 'none';
+      screenshotEmptyEl.style.display = 'block';
+      screenshotEmptyEl.textContent = 'The screenshot could not be loaded.';
+    };
+
+    screenshotEl.src = screenshotUrl;
+  }
+
+  function renderServiceFraming(data, assessedUrl) {
+    const framing = data.service_framing || {};
+    const scope = framing.scope || {};
+
+    serviceDescriptionEl.textContent = framing.service_description || 'No service description returned.';
+    serviceUsersEl.innerHTML = renderList(framing.service_users || []);
+    scopeInEl.innerHTML = renderList(scope.in_scope || []);
+    scopeOutEl.innerHTML = renderList(scope.out_of_scope || []);
+    serviceTypeEl.textContent = data.service_type_guess ? String(data.service_type_guess).toUpperCase() : 'SERVICE FRAMING';
+
+    renderScreenshot(data, assessedUrl);
+  }
+
+  function renderTopIssues(data) {
+    const issues = Array.isArray(data.top_5_issues) ? data.top_5_issues : [];
+    if (!issues.length) {
+      topIssuesContentEl.innerHTML = '<div class="empty">No top issues returned.</div>';
+      return;
+    }
+    topIssuesContentEl.innerHTML = issues.map((issue, idx) => `
+      <div class="item-card">
+        <h4>${idx + 1}. ${escapeHtml(issue)}</h4>
+      </div>
+    `).join('');
+  }
+
+  function renderServiceStandard(ss = {}) {
+    const order = [
+      'point_1_user_needs',
+      'point_2_whole_problem',
+      'point_3_joined_up',
+      'point_4_simple',
+      'point_5_accessible',
+      'point_6_multidisciplinary',
+      'point_7_agile',
+      'point_8_iterate',
+      'point_9_secure_privacy',
+      'point_10_success_metrics',
+      'point_11_tools_tech',
+      'point_12_open_source',
+      'point_13_open_standards',
+      'point_14_reliable_service'
+    ];
+
+    const rows = order.map(key => {
+      const value = ss[key] || {};
+      const rating = value.rating || '';
+      const comments = Array.isArray(value.comments) ? value.comments : [];
+      const actions = Array.isArray(value.actions) ? value.actions : [];
+      const evidence = Array.isArray(value.evidence) ? value.evidence : [];
+      const isNotAssessed = !rating || rating.toLowerCase() === 'not assessed';
+
+      return `
+        <tr>
+          <td class="ss-point">${prettyPointName(key)}</td>
+          <td>${rating ? badgeHtml(rating, rating) : '<span class="not-assessed">Not returned</span>'}</td>
+          <td>${typeof value.score === 'number' ? scorePill(value.score, rating) : '<span class="not-assessed">—</span>'}</td>
+          <td>
+            <div class="stack">
+              ${evidence.length ? `<div><strong>Evidence</strong><ul>${evidence.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
+              ${comments.length ? `<div><strong>Comments</strong><ul>${comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : (isNotAssessed ? '<span class="not-assessed">Could not be assessed from current evidence.</span>' : '<span class="not-assessed">No comments returned.</span>')}
+              ${actions.length ? `<div><strong>Actions</strong><ul>${actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    serviceStandardContentEl.innerHTML = `
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th style="width:22%">Service Standard point</th>
+            <th style="width:14%">Rating</th>
+            <th style="width:12%">Score</th>
+            <th>Assessment notes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function renderResults(data, assessedUrl) {
+    resultsEl.style.display = 'block';
+    scoreEl.textContent = typeof data.overall_score === 'number' ? String(data.overall_score) : '0';
+    summaryEl.textContent = data.summary || 'No summary provided.';
+    overallRatingEl.innerHTML = data.overall_rating ? badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating) : '';
+
+    renderHighlights(data);
+    renderServiceFraming(data, assessedUrl);
+    renderTopIssues(data);
+    renderServiceStandard(data.service_standard || {});
+
+    const wcag = data.wcag || {};
+    wcagContentEl.innerHTML = `
+      <div class="stack">
+        <div>${wcag.status ? badgeHtml(String(wcag.status), wcag.status) : '<span class="empty">No WCAG status returned.</span>'}</div>
+        ${Array.isArray(wcag.issues) && wcag.issues.length
+          ? `<div><strong>Issues identified</strong><ul>${wcag.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No WCAG issues returned.</div>'}
+      </div>
+    `;
+
+    const perfSeo = data.performance_seo || {};
+    perfSeoContentEl.innerHTML = `
+      <div class="stack">
+        ${typeof perfSeo.score === 'number' ? `<div>${scorePill(perfSeo.score, '')}</div>` : ''}
+        ${Array.isArray(perfSeo.comments) && perfSeo.comments.length
+          ? `<div><strong>Comments</strong><ul>${perfSeo.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No performance and SEO comments returned.</div>'}
+      </div>
+    `;
+
+    const security = data.security_privacy || {};
+    securityContentEl.innerHTML = `
+      <div class="stack">
+        ${typeof security.score === 'number' ? `<div>${scorePill(security.score, '')}</div>` : ''}
+        ${Array.isArray(security.comments) && security.comments.length
+          ? `<div><strong>Comments</strong><ul>${security.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No security and privacy comments returned.</div>'}
+      </div>
+    `;
+
+    const env = data.environment || {};
+    environmentContentEl.innerHTML = `
+      <div class="stack">
+        ${typeof env.score === 'number' ? `<div>${scorePill(env.score, '')}</div>` : ''}
+        ${Array.isArray(env.comments) && env.comments.length
+          ? `<div><strong>Comments</strong><ul>${env.comments.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>`
+          : '<div class="empty">No environmental comments returned.</div>'}
+      </div>
+    `;
+  }
+
+  async function runAssessment(event) {
+    event.preventDefault();
+    clearError();
+    resultsEl.style.display = 'none';
+    resetScreenshot();
+
+    const urlInput = document.getElementById('service-url').value.trim();
+    if (!urlInput) {
+      showError('Please enter a URL.');
+      return;
+    }
+
+    try {
+      setLoading(true, 'Running assessment…');
+
+      const assessRes = await fetch(ASSESS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlInput })
+      });
+
+      if (!assessRes.ok) {
+        showError('Assessment request failed with status ' + assessRes.status);
+        setLoading(false, '');
+        return;
+      }
+
+      const rawText = await assessRes.text();
+      const assessmentRaw = rawText ? JSON.parse(rawText) : {};
+      const assessment = Array.isArray(assessmentRaw) ? (assessmentRaw[0] || {}) : assessmentRaw;
+
+      if (typeof assessment.overall_score !== 'number') {
+        showError('No results to display from assessment.');
+        setLoading(false, '');
+        return;
+      }
+
+      renderResults(assessment, urlInput);
+      setLoading(false, 'Assessment complete.');
+    } catch (err) {
+      console.error(err);
+      showError('Something went wrong while running the assessment.');
+      setLoading(false, '');
+    }
+  }
+
+  form.addEventListener('submit', runAssessment);
+</script>
+</body>
+</html>
