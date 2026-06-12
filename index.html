@@ -117,12 +117,7 @@
     }
 
     #status {
-      margin-left: 2px;
-      color: var(--muted);
-      font-weight: 600;
-      display: block;
-      margin-top: 12px;
-      min-height: 24px;
+      display: none;
     }
 
     .error {
@@ -425,7 +420,7 @@
       </section>
 
       <section class="section">
-        <h2>WCAG 2.2 accessibility</h2>
+        <h2>Accessibility</h2>
         <div id="wcag-content"></div>
       </section>
 
@@ -480,11 +475,11 @@
   const securityContentEl = document.getElementById('security-content');
   const environmentContentEl = document.getElementById('environment-content');
 
-  function setLoading(isLoading, message) {
+  function setLoading(isLoading) {
     runButton.style.display = isLoading ? 'none' : 'inline-flex';
     runButton.disabled = isLoading;
     runningStateEl.classList.toggle('active', isLoading);
-    statusEl.textContent = message || (isLoading ? 'Running assessment…' : '');
+    statusEl.textContent = '';
   }
 
   function showError(msg) {
@@ -557,7 +552,7 @@
       parts.push(badgeHtml(String(data.overall_rating).toUpperCase(), data.overall_rating));
     }
     if (data.wcag && data.wcag.status) {
-      parts.push(badgeHtml(`WCAG: ${String(data.wcag.status).toUpperCase()}`, data.wcag.status));
+      parts.push(badgeHtml(`Accessibility: ${String(data.wcag.status).toUpperCase()}`, data.wcag.status));
     }
     if (data.service_framing && data.service_framing.service_description) {
       parts.push(`<div class="muted-box small"><strong>Service:</strong> ${escapeHtml(data.service_framing.service_description)}</div>`);
@@ -707,10 +702,10 @@
     const wcag = data.wcag || {};
     wcagContentEl.innerHTML = `
       <div class="stack">
-        <div>${wcag.status ? badgeHtml(String(wcag.status), wcag.status) : '<span class="empty">No WCAG status returned.</span>'}</div>
+        <div>${wcag.status ? badgeHtml(String(wcag.status), wcag.status) : '<span class="empty">No accessibility status returned.</span>'}</div>
         ${Array.isArray(wcag.issues) && wcag.issues.length
           ? `<div><strong>Issues identified</strong><ul>${wcag.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>`
-          : '<div class="empty">No WCAG issues returned.</div>'}
+          : '<div class="empty">No accessibility issues returned.</div>'}
       </div>
     `;
 
@@ -758,7 +753,7 @@
     }
 
     try {
-      setLoading(true, 'Running assessment…');
+      setLoading(true);
 
       const assessRes = await fetch(ASSESS_URL, {
         method: 'POST',
@@ -768,7 +763,7 @@
 
       if (!assessRes.ok) {
         showError('Assessment request failed with status ' + assessRes.status);
-        setLoading(false, '');
+        setLoading(false);
         return;
       }
 
@@ -778,16 +773,16 @@
 
       if (typeof assessment.overall_score !== 'number') {
         showError('No results to display from assessment.');
-        setLoading(false, '');
+        setLoading(false);
         return;
       }
 
       renderResults(assessment, urlInput);
-      setLoading(false, 'Assessment complete.');
+      setLoading(false);
     } catch (err) {
       console.error(err);
       showError('Something went wrong while running the assessment.');
-      setLoading(false, '');
+      setLoading(false);
     }
   }
 
