@@ -322,6 +322,67 @@
       font-style: italic;
       font-size: 0.9rem;
     }
+
+    /* Get help section */
+    .help-section {
+      background: #f0f4f9;
+      border: 1px solid #c5d4e8;
+      border-left: 5px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-top: 18px;
+    }
+    .help-section h2 {
+      margin: 0 0 6px;
+      font-size: 1.25rem;
+      color: #0b4f8a;
+    }
+    .help-section p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 0.97rem;
+    }
+    .help-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .help-card {
+      background: #fff;
+      border: 1px solid #d0dce8;
+      border-radius: 12px;
+      padding: 18px 20px;
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .help-card:hover {
+      box-shadow: 0 4px 16px rgba(29,112,184,0.13);
+      border-color: var(--blue);
+    }
+    .help-card-icon {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .help-card h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      color: var(--blue);
+    }
+    .help-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .help-card .help-link-label {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
   </style>
 </head>
 <body>
@@ -438,6 +499,31 @@
         <h2>Environmental sustainability</h2>
         <div id="environment-content"></div>
       </section>
+    </div>
+
+    <div class="help-section" aria-label="Get help acting on this report">
+      <h2>Not sure where to go from here?</h2>
+      <p>This report has identified areas where your website could be improved. Here are three ways to get practical help.</p>
+      <div class="help-cards">
+        <a class="help-card" href="https://digitalaccessibilitycentre.org/" target="_blank" rel="noopener noreferrer">
+          <span class="help-card-icon" aria-hidden="true">♿</span>
+          <h3>Get an accessibility audit</h3>
+          <p>The Digital Accessibility Centre tests websites against all accessibility needs, including disability-led user testing. Recommended for any public sector site.</p>
+          <span class="help-link-label">Visit digitalaccessibilitycentre.org →</span>
+        </a>
+        <a class="help-card" href="https://www.digitalmarketplace.service.gov.uk" target="_blank" rel="noopener noreferrer">
+          <span class="help-card-icon" aria-hidden="true">🛒</span>
+          <h3>Find a digital supplier</h3>
+          <p>The Digital Marketplace lets public sector bodies find approved suppliers for design, development, and accessibility work — without needing a full tender process.</p>
+          <span class="help-link-label">Visit digitalmarketplace.service.gov.uk →</span>
+        </a>
+        <a class="help-card" href="mailto:your@email.com">
+          <span class="help-card-icon" aria-hidden="true">💬</span>
+          <h3>Talk it through with us</h3>
+          <p>If you would like a conversation about what to prioritise or how to get started, get in touch. We are happy to help you make sense of the findings.</p>
+          <span class="help-link-label">Get in touch →</span>
+        </a>
+      </div>
     </div>
 
     <p class="footer-note">This page renders the assessment JSON returned by your n8n webhook.</p>
