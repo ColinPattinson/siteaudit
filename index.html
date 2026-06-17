@@ -50,7 +50,7 @@
     label { display: block; font-weight: 700; margin-bottom: 8px; }
     .field-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
     .input-wrap { flex: 1 1 420px; min-width: 240px; }
-    input[type="url"] {
+    input[type="text"] {
       width: 100%;
       padding: 14px 16px;
       border: 2px solid #b1b4b6;
@@ -60,7 +60,7 @@
       color: var(--text);
       outline: none;
     }
-    input[type="url"]:focus {
+    input[type="text"]:focus {
       border-color: var(--blue);
       box-shadow: 0 0 0 3px rgba(29,112,184,0.2);
     }
@@ -397,7 +397,7 @@
       <label for="service-url">Service URL</label>
       <div class="field-row">
         <div class="input-wrap">
-          <input id="service-url" name="service-url" type="url" placeholder="https://www.legislation.gov.uk/" required>
+          <input id="service-url" name="service-url" type="text" placeholder="https://www.legislation.gov.uk/ or gov.uk" required autocomplete="url" spellcheck="false">
         </div>
 
         <div class="action-slot">
@@ -560,6 +560,25 @@
   const perfSeoContentEl = document.getElementById('perf-seo-content');
   const securityContentEl = document.getElementById('security-content');
   const environmentContentEl = document.getElementById('environment-content');
+
+  /**
+   * Normalise whatever the user typed into a proper https:// URL.
+   * Handles:
+   *   gov.uk              → https://gov.uk
+   *   www.gov.uk          → https://www.gov.uk
+   *   http://gov.uk       → http://gov.uk  (kept as-is)
+   *   https://www.gov.uk  → https://www.gov.uk (kept as-is)
+   */
+  function normaliseUrl(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    // Already has a scheme — leave it alone
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    // Looks like it might have a non-http scheme (ftp://, etc.) — leave it
+    if (/^[a-z][a-z0-9+\-.]*:\/\//i.test(trimmed)) return trimmed;
+    // No scheme — prepend https://
+    return 'https://' + trimmed;
+  }
 
   function setLoading(isLoading) {
     runButton.style.display = isLoading ? 'none' : 'inline-flex';
@@ -832,9 +851,19 @@
     resultsEl.style.display = 'none';
     resetScreenshot();
 
-    const urlInput = document.getElementById('service-url').value.trim();
-    if (!urlInput) {
+    const rawInput = document.getElementById('service-url').value.trim();
+    if (!rawInput) {
       showError('Please enter a URL.');
+      return;
+    }
+
+    const urlInput = normaliseUrl(rawInput);
+
+    // Basic sanity check that it looks like a URL after normalisation
+    try {
+      new URL(urlInput);
+    } catch (_) {
+      showError('That doesn\'t look like a valid web address. Try something like gov.uk or https://www.gov.uk.');
       return;
     }
 
